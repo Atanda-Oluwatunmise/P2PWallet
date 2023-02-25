@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWallet.Api", "P2PWallet\P2PWallet.Api.csproj", "{185DECF4-4627-40FC-A934-EDB13144A182}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWallet.Services", "P2PWallet.Services\P2PWallet.Services.csproj", "{0C045ACC-718C-49F6-958A-6C132041E2A8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWallet.Models", "P2PWallet.Models\P2PWallet.Models.csproj", "{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{185DECF4-4627-40FC-A934-EDB13144A182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{185DECF4-4627-40FC-A934-EDB13144A182}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{185DECF4-4627-40FC-A934-EDB13144A182}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{185DECF4-4627-40FC-A934-EDB13144A182}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C045ACC-718C-49F6-958A-6C132041E2A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C045ACC-718C-49F6-958A-6C132041E2A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C045ACC-718C-49F6-958A-6C132041E2A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C045ACC-718C-49F6-958A-6C132041E2A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {47AF91D4-58BE-4080-B2F6-0B9790F6F049}
+	EndGlobalSection
+EndGlobal
