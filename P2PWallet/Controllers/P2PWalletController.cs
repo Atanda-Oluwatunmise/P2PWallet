@@ -25,10 +25,13 @@ namespace P2PWallet.Api.Controllers
 
         [Route("Users")]
         [HttpPost]
-        public async Task<ActionResult<List<UserViewModel>>> AddNewUser(UserDto user)
+        public async Task<ActionResult<List<UserViewModel>>> Register(UserDto user)
         {
-            var result = await _p2PWalletServices.AddNewUser(user);
-            return Ok(result);
+            if (await _p2PWalletServices.UserAlreadyExists(user.Username) || await _p2PWalletServices.EmailAlreadyExists(user.Email))
+                return BadRequest("User already exists");
+
+            var result = await _p2PWalletServices.Register(user);
+            return StatusCode(201);
         }
 
     }

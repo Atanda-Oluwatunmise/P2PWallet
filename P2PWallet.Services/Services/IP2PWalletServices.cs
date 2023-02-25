@@ -9,6 +9,9 @@ namespace P2PWallet.Services.Services
 {
     public interface IP2PWalletServices
     {
-        public Task<UserViewModel> AddNewUser(UserDto user);
+        public Task<UserViewModel> Register(UserDto user);
+        public Task<bool> UserAlreadyExists(string userName);
+        public Task<bool> EmailAlreadyExists(string emailName);
+
     }
 }
