@@ -17,7 +17,13 @@ namespace P2PWallet.Models.Models.DataObjects
             public string Address { get; set; } = string.Empty;
             public string Password { get; set; } = string.Empty;
     }
-        public class UserViewModel
+
+        public class LoginDto
+        {
+            public string Username { get; set; } = string.Empty;
+            public string Password { get; set; } = string.Empty;
+        }
+    public class UserViewModel
         {
             public string Username { get; set; } = string.Empty; 
             public string FirstName { get; set; } = string.Empty;
@@ -44,5 +50,13 @@ namespace P2PWallet.Models.Models.DataObjects
             public double Balance { get; set; }
             public string Currency { get; set; } = string.Empty; 
         }
-    
+
+        //public class ServiceResponse<T>
+        //{
+        //    public bool Status { get; set; }
+        //    public string StatusMessage { get; set; } = string.Empty;
+        //    public T? Data { get; set; }
+
+        //}
+
 }
