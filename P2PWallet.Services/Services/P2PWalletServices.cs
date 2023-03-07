@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Aspose.Pdf;
+using Aspose.Pdf.Operators;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -15,14 +18,18 @@ namespace P2PWallet.Services.Services
     public class P2PWalletServices : IP2PWalletServices
     {
         public static User user = new User();
+        public static Account account = new Account();
         private readonly DataContext _dataContext;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public P2PWalletServices(DataContext dataContext, IConfiguration configuration)
+        public P2PWalletServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
-            _configuration= configuration;
+            _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
+
 
         public async Task<bool> EmailAlreadyExists(string emailName)
         {
@@ -40,11 +47,15 @@ namespace P2PWallet.Services.Services
         public async Task<ServiceResponse<UserViewModel>> Register(UserDto user)
         {
             //Initializing a collection
-            var serviceResponse = new ServiceResponse<UserViewModel>();
+            var response = new ServiceResponse<UserViewModel>();
 
             try
             {
-                   
+                if (await UserAlreadyExists(user.Username) || await EmailAlreadyExists(user.Email))
+                {
+                    throw new Exception("User Already Exists");
+                }
+
                 CreatePasswordHash(user.Password,
                     out byte[] passwordKey, out byte[] passwordHash);
 
@@ -64,14 +75,34 @@ namespace P2PWallet.Services.Services
                 //Adding the new instance in the databse
                 await _dataContext.Users.AddAsync(newuser);
                 await _dataContext.SaveChangesAsync();
-                serviceResponse.Data = new UserViewModel();
+                //response.Data = new UserViewModel();
+
+                string userAccounNumber = string.Empty;
+                string startWith = "1000";
+                Random generator = new Random();
+                string r = generator.Next(0, 999999).ToString("D6");
+                userAccounNumber = startWith + r;
+
+                if (newuser != null && await UserAlreadyExists(user.Username))
+                {
+                    var newaccount = new Account()
+                    {
+                        UserId = newuser.Id,
+                        AccountNumber = userAccounNumber
+                    };
+                    await _dataContext.Accounts.AddAsync(newaccount);
+                    await _dataContext.SaveChangesAsync();
+
+                }
             }
             catch (Exception ex)
             {
-                serviceResponse.Status = false;
-                serviceResponse.StatusMessage = ex.Message;
+                response.Status = false;
+                response.StatusMessage = ex.Message;
             }
-            return serviceResponse;
+
+            return response;
+
         }
 
         public async Task<bool> UserAlreadyExists(string userName)
@@ -95,8 +126,9 @@ namespace P2PWallet.Services.Services
         {
             List<Claim> claims = new List<Claim>()
             {
-                new Claim(ClaimTypes.Name, user.Username)
-
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, "Admin"),
             };
             // defining a symmetric security key that creates the web token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -110,7 +142,7 @@ namespace P2PWallet.Services.Services
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(3),
                 signingCredentials: credentials
-                ); 
+                );
 
             //write the token
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
@@ -136,9 +168,9 @@ namespace P2PWallet.Services.Services
 
                 string token = CreateJWT(user);
                 response.Data = token;
-                
+
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
@@ -146,5 +178,27 @@ namespace P2PWallet.Services.Services
 
             return response;
         }
+
+        public string GetMyAccountNumber()
+        {
+
+            var result = string.Empty;
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                var userAccount = _dataContext.Accounts.Where(x => x.UserId == userId).FirstOrDefault();
+
+                if (userAccount != null)
+                {
+                    result = userAccount.AccountNumber.ToString();
+                }
+            }
+        
+            return result;
+
+        }
+            
     }
 }
+

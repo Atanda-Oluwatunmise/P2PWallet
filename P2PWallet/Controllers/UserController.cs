@@ -1,15 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services;
 using P2PWallet.Services.Services;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace P2PWallet.Api.Controllers
 
@@ -27,17 +23,20 @@ namespace P2PWallet.Api.Controllers
             _p2PWalletServices = p2PWalletServices;
 
         }
+        //[HttpGet, Authorize]
+        //public ActionResult<string> GetMe() {
+        //    var userName = _p2PWalletServices.GetMyName();
+        //    return Ok(userName);
+        //}
 
         [HttpPost("Register")]
-        public async Task<ActionResult<ServiceResponse<List<UserViewModel>>>> Register(UserDto user)
+        public async Task<ServiceResponse<UserViewModel>> Register(UserDto user)
         {
-            if (await _p2PWalletServices.UserAlreadyExists(user.Username) || await _p2PWalletServices.EmailAlreadyExists(user.Email))
-              return BadRequest ("User Already Exists");
-
-            await _p2PWalletServices.Register(user);
-            return Ok("User Successfully created");
+           var result =  await _p2PWalletServices.Register(user);
+           return result;
+           
         }
-
+            
         [HttpPost("Login")]
         public async Task<ServiceResponse<string>> Login(LoginDto loginreq)
         {
@@ -45,6 +44,12 @@ namespace P2PWallet.Api.Controllers
              return result;
         }
 
+        [HttpGet("AccountNumber"), Authorize]
+        public ActionResult<string> GetNumber()
+        {
+            var accountNumber = _p2PWalletServices.GetMyAccountNumber();
+            return Ok(accountNumber);
+        }
 
 
 
