@@ -10,24 +10,22 @@ namespace P2PWallet.Models.Models.Entities
 {
     public class Account
     { 
+
         public Account()
         {
-            Balance = 10000;
+            Balance = 10000.00;
             Currency = "NGN";
-
         }
 
         [Key]
         public int Id { get; set; }
 
-        [ForeignKey("Users")]
+        [ForeignKey("User")]
         public int UserId { get; set; }
         public string AccountNumber { get; set; } =string.Empty;
-        public double Balance { get; set; }
+        public double Balance { get; set; } 
         public string Currency { get; set; } = string.Empty;
-
-        public virtual User Users { get; set; }
-
-
+        
+        public virtual User User { get; set; }
     }
 }

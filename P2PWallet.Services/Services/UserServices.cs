@@ -1,5 +1,6 @@
 ﻿using Aspose.Pdf;
 using Aspose.Pdf.Operators;
+using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -7,15 +8,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace P2PWallet.Services.Services
 {
-    public class P2PWalletServices : IP2PWalletServices
+    public class UserServices : IUserServices
     {
         public static User user = new User();
         public static Account account = new Account();
@@ -23,7 +27,7 @@ namespace P2PWallet.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public P2PWalletServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public UserServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _configuration = configuration;
@@ -88,7 +92,8 @@ namespace P2PWallet.Services.Services
                     var newaccount = new Account()
                     {
                         UserId = newuser.Id,
-                        AccountNumber = userAccounNumber
+                        AccountNumber = userAccounNumber,
+                        Balance = account.Balance
                     };
                     await _dataContext.Accounts.AddAsync(newaccount);
                     await _dataContext.SaveChangesAsync();
@@ -128,7 +133,8 @@ namespace P2PWallet.Services.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, "Admin"),
+                new Claim("AccountNumber", user.UserAccount.AccountNumber),
+                new Claim(ClaimTypes.Role, "Admin")
             };
             // defining a symmetric security key that creates the web token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -149,12 +155,12 @@ namespace P2PWallet.Services.Services
             return jwt;
         }
 
-        public async Task<ServiceResponse<string>> Login(LoginDto loginreq)
+        public async Task<ServiceResponse<LoginView>> Login(LoginDto loginreq)
         {
-            var response = new ServiceResponse<string>();
+            var response = new ServiceResponse<LoginView>();
             try
             {
-                var user = await _dataContext.Users.FirstOrDefaultAsync(x => x.Username == loginreq.Username);
+                var user = await _dataContext.Users.Include("UserAccount").FirstOrDefaultAsync(x => x.Username == loginreq.Username);
 
                 if (user == null)
                 {
@@ -166,8 +172,12 @@ namespace P2PWallet.Services.Services
                     throw new Exception("Username/Password is Incorrect");
                 }
 
-                string token = CreateJWT(user);
-                response.Data = token;
+                var logindata = new LoginView()
+                {
+                    Name = loginreq.Username,
+                    Token = CreateJWT(user)
+                };
+                response.Data = logindata;
 
             }
             catch (Exception ex)
@@ -179,26 +189,40 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
-        public string GetMyAccountNumber()
+
+        public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {
-
-            var result = string.Empty;
-            if (_httpContextAccessor.HttpContext != null)
+            var response = new ServiceResponse<List<AccountDetails>>();
+            List <AccountDetails> accountDetails = new List<AccountDetails>();
+            try
             {
-                var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-                var userAccount = _dataContext.Accounts.Where(x => x.UserId == userId).FirstOrDefault();
-
-                if (userAccount != null)
+                if (_httpContextAccessor.HttpContext != null)
                 {
-                    result = userAccount.AccountNumber.ToString();
-                }
-            }
-        
-            return result;
+                    var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-        }
-            
+                    var userAccount =  _dataContext.Accounts.Include("User").Where(x => x.UserId == userId).FirstOrDefault();
+
+                    if (userAccount != null)
+                    {
+                        var data = new AccountDetails()
+                        {
+                            AccountName = userAccount.User.FirstName + " " + userAccount.User.LastName,
+                            AccountNumber = userAccount.AccountNumber,
+                            Balance = userAccount.Balance
+                        };
+                        accountDetails.Add(data);
+                    }
+                    response.Data = accountDetails;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }  
+            return response;
+        }    
     }
 }
 

@@ -8,15 +8,16 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Services.Services
 {
-    public interface IP2PWalletServices
+    public interface IUserServices
     {
         public Task<ServiceResponse<UserViewModel>> Register(UserDto user);
-        public Task<ServiceResponse<string>> Login(LoginDto loginreq);
+        public Task<ServiceResponse<LoginView>> Login(LoginDto loginreq);
         public Task<bool> UserAlreadyExists(string userName);
         public Task<bool> EmailAlreadyExists(string emailName);
         public bool VerifyPasswordHash(string password, byte[] passwordKey, byte[] passwordHash);
         //public string GetMyName();
-        public string GetMyAccountNumber();
+        public Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber();
+
 
 
     }

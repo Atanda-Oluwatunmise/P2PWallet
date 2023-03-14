@@ -16,42 +16,34 @@ namespace P2PWallet.Api.Controllers
     { 
 
         private readonly DataContext _dataContext;
-        private readonly IP2PWalletServices _p2PWalletServices;
-        public UserController(DataContext dataContext, IP2PWalletServices p2PWalletServices)
+        private readonly IUserServices _userServices;
+        public UserController(DataContext dataContext, IUserServices userServices)
         {
             _dataContext = dataContext;
-            _p2PWalletServices = p2PWalletServices;
+            _userServices = userServices;
 
         }
-        //[HttpGet, Authorize]
-        //public ActionResult<string> GetMe() {
-        //    var userName = _p2PWalletServices.GetMyName();
-        //    return Ok(userName);
-        //}
 
         [HttpPost("Register")]
         public async Task<ServiceResponse<UserViewModel>> Register(UserDto user)
         {
-           var result =  await _p2PWalletServices.Register(user);
+           var result =  await _userServices.Register(user);
            return result;
            
         }
             
         [HttpPost("Login")]
-        public async Task<ServiceResponse<string>> Login(LoginDto loginreq)
+        public async Task<ServiceResponse<LoginView>> Login(LoginDto loginreq)
         {
-             var result = await _p2PWalletServices.Login(loginreq);
+             var result = await _userServices.Login(loginreq);
              return result;
         }
 
-        [HttpGet("AccountNumber"), Authorize]
-        public ActionResult<string> GetNumber()
+        [HttpGet("AccountDetails"), Authorize]
+        public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {
-            var accountNumber = _p2PWalletServices.GetMyAccountNumber();
-            return Ok(accountNumber);
+            var result = await _userServices.GetMyAccountNumber();
+            return result;
         }
-
-
-
     }
 }

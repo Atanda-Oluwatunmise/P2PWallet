@@ -27,7 +27,8 @@ builder.Services.AddSwaggerGen(options => {
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
-builder.Services.AddScoped<IP2PWalletServices, P2PWalletServices>();
+builder.Services.AddScoped<IUserServices, UserServices>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<DataContext>(
                                            options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

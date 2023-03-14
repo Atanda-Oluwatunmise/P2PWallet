@@ -8,8 +8,15 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Models.Models.Entities
 {
+
     public class User
     {
+        public User()
+        {
+            //UserAccount = new HashSet<Account>();
+            UserTransaction = new HashSet<Transaction>();
+        }
+
         [Key]
         public int Id { get; set; }
         public string Username { get; set; }= string.Empty;
@@ -20,6 +27,10 @@ namespace P2PWallet.Models.Models.Entities
         public string Address { get; set; } = string.Empty;
         public byte[] Password { get; set; } = new byte[32];
         public byte[] PasswordKey { get; set; } = new byte[32];
+
+        public virtual Account UserAccount { get; set; }
+        //public ICollection<Transaction> UserTransaction { get; set; }
+        public virtual ICollection<Transaction> UserTransaction { get; set; }
 
     }
 }
