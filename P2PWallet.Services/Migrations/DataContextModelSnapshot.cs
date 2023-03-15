@@ -70,29 +70,25 @@ namespace P2PWallet.Services.Migrations
                     b.Property<DateTime>("DateofTransaction")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("NameofRecipient")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NameofSender")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("RecipientAccountNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RecipientId")
+                    b.Property<int?>("RecipientId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("SenderAccountNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("SenderId")
+                    b.Property<int?>("SenderId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RecipientId");
 
                     b.HasIndex("SenderId");
 
@@ -157,18 +153,25 @@ namespace P2PWallet.Services.Migrations
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>
                 {
-                    b.HasOne("P2PWallet.Models.Models.Entities.User", "User")
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "ReceiverUser")
+                        .WithMany("ReceiverTransaction")
+                        .HasForeignKey("RecipientId")
+                        .IsRequired();
+
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "SenderUser")
                         .WithMany("UserTransaction")
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Users_Transactions");
+                        .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("ReceiverUser");
+
+                    b.Navigation("SenderUser");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.User", b =>
                 {
+                    b.Navigation("ReceiverTransaction");
+
                     b.Navigation("UserAccount")
                         .IsRequired();
 

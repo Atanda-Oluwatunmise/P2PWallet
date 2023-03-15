@@ -11,8 +11,7 @@ namespace P2PWallet.Services.Services
     public interface ITransactionService
     {
         public Task<ServiceResponse<AccountViewModel>> Transfers(TransferDto transferdto);
-        public Task<ServiceResponse<List<TransactionsView>>> DebitTransactionsHistory();
-        public Task<ServiceResponse<List<TransactionsView>>> CreditTransactionsHistory();
+        public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory();
 
 
 

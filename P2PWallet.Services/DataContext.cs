@@ -20,14 +20,26 @@ namespace P2PWallet.Services
             //    .WithOne(c => c.User);
             //});
 
+            //modelBuilder.Entity<Transaction>(entity =>
+            //{
+            //    entity.HasOne(d => d.User)
+            //    .WithMany(p => p.UserTransaction)
+            //    .HasForeignKey(d => d.SenderId)
+            //    .HasConstraintName("FK_Users_Transactions");
+            //});
+
             modelBuilder.Entity<Transaction>(entity =>
             {
-                entity.HasOne(d => d.User)
+                entity.HasOne(d => d.SenderUser)
                 .WithMany(p => p.UserTransaction)
                 .HasForeignKey(d => d.SenderId)
-                .HasConstraintName("FK_Users_Transactions");
-            });
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
+                entity.HasOne(d => d.ReceiverUser)
+                .WithMany(p => p.ReceiverTransaction)
+                .HasForeignKey(d => d.RecipientId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
         }
 
         public DbSet<Account> Accounts { get; set; }

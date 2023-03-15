@@ -13,17 +13,21 @@ namespace P2PWallet.Models.Models.Entities
         [Key]
         public int Id { get; set; }
 
-        [ForeignKey("Users")]
-        public int SenderId { get; set; }
-        public int RecipientId { get; set; }
+        //[ForeignKey("Users")]
+        public int? SenderId { get; set; }
+        //[ForeignKey("Users")]
+        public int? RecipientId { get; set; }
         public string SenderAccountNumber { get; set; } = string.Empty;
-        public string NameofSender { get; set; } = string.Empty;
+        //public string NameofSender { get; set; } = string.Empty;
         public string RecipientAccountNumber { get; set;} = string.Empty;
-        public string NameofRecipient { get; set; } = string.Empty;
+        //public string NameofRecipient { get; set; } = string.Empty;
         public double Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
         public DateTime DateofTransaction { get; set; }
 
-        public virtual User User { get; set; }
+        [ForeignKey("SenderId")]
+        public virtual User SenderUser { get; set; }
+        [ForeignKey("RecipientId")]
+        public virtual User ReceiverUser { get; set; }
     }
 }

@@ -28,16 +28,9 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpGet("DebitTransactionsHistory"), Authorize]
-        public async Task<ServiceResponse<List<TransactionsView>>> DebitTransactionsHistory()
+        public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory()
         {
-            var result = await _transactionService.DebitTransactionsHistory();
-            return result;
-        }
-
-        [HttpGet("CreditTransactionsHistory"), Authorize]
-        public async Task<ServiceResponse<List<TransactionsView>>> CreditTransactionsHistory()
-        {
-            var result = await _transactionService.CreditTransactionsHistory();
+            var result = await _transactionService.UserTransactionsHistory();
             return result;
         }
 

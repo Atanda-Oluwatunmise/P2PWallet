@@ -62,23 +62,24 @@ namespace P2PWallet.Services.Migrations
                     SenderId = table.Column<int>(type: "int", nullable: false),
                     RecipientId = table.Column<int>(type: "int", nullable: false),
                     SenderAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NameofSender = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RecipientAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    NameofRecipient = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Amount = table.Column<double>(type: "float", nullable: false),
                     Currency = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DateofTransaction = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false)
+                    DateofTransaction = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Transactions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Transactions_Users_UserId",
-                        column: x => x.UserId,
+                        name: "FK_Transactions_Users_RecipientId",
+                        column: x => x.RecipientId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Transactions_Users_SenderId",
+                        column: x => x.SenderId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -88,9 +89,14 @@ namespace P2PWallet.Services.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transactions_UserId",
+                name: "IX_Transactions_RecipientId",
                 table: "Transactions",
-                column: "UserId");
+                column: "RecipientId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_SenderId",
+                table: "Transactions",
+                column: "SenderId");
         }
 
         /// <inheritdoc />

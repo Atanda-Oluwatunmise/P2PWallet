@@ -60,7 +60,7 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class TransferDto
     {
-        public string AccountNumber { get; set; } = string.Empty;
+        public string AccountSearch { get; set; } = string.Empty;
         public double Amount { get; set; }
     }
 
@@ -97,6 +97,7 @@ namespace P2PWallet.Models.Models.DataObjects
         public string AccountNumber { get; set; } = string.Empty;
         public double Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
+        public string TransType { get; set; } = string.Empty;
         public DateTime DateofTransaction { get; set; }
     }
 

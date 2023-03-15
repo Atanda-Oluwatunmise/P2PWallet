@@ -15,6 +15,8 @@ namespace P2PWallet.Models.Models.Entities
         {
             //UserAccount = new HashSet<Account>();
             UserTransaction = new HashSet<Transaction>();
+            ReceiverTransaction = new HashSet<Transaction>();
+
         }
 
         [Key]
@@ -31,6 +33,7 @@ namespace P2PWallet.Models.Models.Entities
         public virtual Account UserAccount { get; set; }
         //public ICollection<Transaction> UserTransaction { get; set; }
         public virtual ICollection<Transaction> UserTransaction { get; set; }
+        public virtual ICollection<Transaction> ReceiverTransaction { get; set; }
 
     }
 }
