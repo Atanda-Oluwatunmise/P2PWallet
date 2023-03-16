@@ -39,6 +39,14 @@ namespace P2PWallet.Api.Controllers
              return result;
         }
 
+        [HttpPost("UserDetails")]
+        public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch)
+        {
+            var result = await _userServices.GetUserDetails(userSearch);
+            return result;
+        }
+
+
         [HttpGet("AccountDetails"), Authorize]
         public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {

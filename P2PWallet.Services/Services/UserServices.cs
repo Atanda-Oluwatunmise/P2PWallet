@@ -200,7 +200,7 @@ namespace P2PWallet.Services.Services
                 {
                     var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                    var userAccount =  _dataContext.Accounts.Include("User").Where(x => x.UserId == userId).FirstOrDefault();
+                    var userAccount = await _dataContext.Accounts.Include("User").Where(x => x.UserId == userId).FirstOrDefaultAsync();
 
                     if (userAccount != null)
                     {
@@ -222,7 +222,45 @@ namespace P2PWallet.Services.Services
                 response.StatusMessage = ex.Message;
             }  
             return response;
-        }    
+        }   
+        
+        public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch)
+        {
+            var response = new ServiceResponse<List<SearchAccountDetails>>();
+            List<SearchAccountDetails> userDetails = new List<SearchAccountDetails>();
+            try
+            {
+                var searchUser = await _dataContext.Users.FirstOrDefaultAsync(x => x.UserAccount.AccountNumber == userSearch.AccountSearch
+                                                                                   || x.Username == userSearch.AccountSearch
+                                                                                   || x.Email == userSearch.AccountSearch);
+
+                if (searchUser == null)
+                {
+                    throw new Exception("Account does not exist");
+                }
+                    var userId = await _dataContext.Users.Include("UserAccount")
+                                .Where(x => x.UserAccount.UserId == searchUser.Id)
+                                .FirstOrDefaultAsync();
+
+                    if (userId != null)
+                    {
+                        var data = new SearchAccountDetails()
+                        {
+                            AccountName = userId.FirstName + " " + userId.LastName,
+                            AccountNumber = userId.UserAccount.AccountNumber
+                        };
+                        userDetails.Add(data);
+                    }
+                    response.Data = userDetails;
+
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
     }
 }
 

@@ -15,8 +15,9 @@ namespace P2PWallet.Services.Services
         public Task<bool> UserAlreadyExists(string userName);
         public Task<bool> EmailAlreadyExists(string emailName);
         public bool VerifyPasswordHash(string password, byte[] passwordKey, byte[] passwordHash);
-        //public string GetMyName();
         public Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber();
+        public Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch);
+
 
 
 

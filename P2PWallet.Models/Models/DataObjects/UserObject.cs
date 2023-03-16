@@ -64,6 +64,11 @@ namespace P2PWallet.Models.Models.DataObjects
         public double Amount { get; set; }
     }
 
+    public class UserSearchDto
+    {
+        public string AccountSearch { get; set; } = string.Empty;
+    }
+
     public class AccountViewModel
     {
         public string AccountNumber { get; set; } = string.Empty;
@@ -78,18 +83,13 @@ namespace P2PWallet.Models.Models.DataObjects
         public double Balance { get; set; }
     }
 
-    public class TransactionsViewModel
+    public class SearchAccountDetails
     {
-        public int SenderId { get; set; }
-        public int RecipientId { get; set; }
-        public string SenderAccountNumber { get; set; } = string.Empty;
-        public string NameofSender { get; set; } = string.Empty;
-        public string RecipientAccountNumber { get; set; } = string.Empty;
-        public string NameofRecipient { get; set; } = string.Empty;
-        public double Amount { get; set; }
-        public string Currency { get; set; } = string.Empty;
-        public DateTime DateofTransaction { get; set; }
+        public string AccountName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
     }
+
+    
 
     public class TransactionsView
     {
