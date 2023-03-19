@@ -12,7 +12,7 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230315101905_Initial")]
+    [Migration("20230318180014_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -53,6 +53,33 @@ namespace P2PWallet.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PinId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("PinKey")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<byte[]>("UserPin")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PinId")
+                        .IsUnique();
+
+                    b.ToTable("Pin");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>
@@ -154,6 +181,17 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
+                {
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "User")
+                        .WithOne("UserPin")
+                        .HasForeignKey("P2PWallet.Models.Models.Entities.Pin", "PinId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "ReceiverUser")
@@ -176,6 +214,9 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("ReceiverTransaction");
 
                     b.Navigation("UserAccount")
+                        .IsRequired();
+
+                    b.Navigation("UserPin")
                         .IsRequired();
 
                     b.Navigation("UserTransaction");

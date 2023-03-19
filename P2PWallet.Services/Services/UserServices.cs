@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
+using P2PWallet.Services.Interface;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -76,7 +77,7 @@ namespace P2PWallet.Services.Services
                     PasswordKey = passwordKey
                 };
 
-                //Adding the new instance in the databse
+                //Adding the new instance in the database
                 await _dataContext.Users.AddAsync(newuser);
                 await _dataContext.SaveChangesAsync();
                 //response.Data = new UserViewModel();
@@ -146,7 +147,7 @@ namespace P2PWallet.Services.Services
             //generate token
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(3),
+                expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: credentials
                 );
 

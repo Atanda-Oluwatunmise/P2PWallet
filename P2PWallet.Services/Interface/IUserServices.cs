@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace P2PWallet.Services.Services
+namespace P2PWallet.Services.Interface
 {
     public interface IUserServices
     {

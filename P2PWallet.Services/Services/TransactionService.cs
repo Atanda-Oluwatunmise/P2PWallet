@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
+using P2PWallet.Services.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,15 @@ namespace P2PWallet.Services.Services
                     throw new Exception("Account number is invalid");
                 }
 
+
+                if (amount > userAccountNumber.Balance)
+                {
+                    throw new Exception("Insufficient Account Balance");
+                }
+
+                if (senderaccount != null || userAccountNumber.Balance == amount || amount < userAccountNumber.Balance)
+                {
+
                     userAccountNumber.Balance = userAccountNumber.Balance - amount;
 
                     var data = new AccountViewModel
@@ -68,7 +78,7 @@ namespace P2PWallet.Services.Services
                         Currency = userAccountNumber.Currency
                     };
                     response.Data = data;
-
+                }
 
                 _dataContext.Accounts.Update(userAccountNumber);
                 await _dataContext.SaveChangesAsync();
@@ -119,7 +129,7 @@ namespace P2PWallet.Services.Services
                     if (loggedUserId != null)
                     {
 
-                        var txns = await _dataContext.Transactions.Include("ReceiverUser")
+                        var txns = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
                             .Where(x => x.SenderId == loggedUserId).ToListAsync();
 
 
@@ -128,29 +138,29 @@ namespace P2PWallet.Services.Services
 
                             var debitdata = new TransactionsView()
                             {
-                                Name = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName,
-                                AccountNumber = txn.RecipientAccountNumber,
-                                Amount = txn.Amount,
+                                SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
                                 Currency = txn.Currency,
+                                TxnAmount = txn.Amount,
                                 TransType = "DEBIT",
+                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
                                 DateofTransaction = txn.DateofTransaction
                             };
                             transactions.Add(debitdata);
                         }
 
 
-                        var trxns = await _dataContext.Transactions.Include("SenderUser")
+                        var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
                             .Where(x => x.RecipientId == loggedUserId).ToListAsync();
 
 
                         foreach (var txn in trxns) { 
                             var creditdata = new TransactionsView()
                             {
-                                Name = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName,
-                                AccountNumber = txn.SenderAccountNumber,
-                                Amount = txn.Amount,
+                                SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
                                 Currency = txn.Currency,
+                                TxnAmount = txn.Amount,
                                 TransType = "CREDIT",
+                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
                                 DateofTransaction = txn.DateofTransaction
                             };
                             transactions.Add(creditdata);

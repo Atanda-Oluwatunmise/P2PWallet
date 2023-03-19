@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Microsoft.AspNetCore.Authentication;
+using P2PWallet.Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,7 @@ builder.Services.AddSwaggerGen(options => {
 });
 builder.Services.AddScoped<IUserServices, UserServices>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<DataContext>(
                                            options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

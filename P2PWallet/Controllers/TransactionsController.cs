@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
-using P2PWallet.Services.Services;
+using P2PWallet.Services.Interface;
 
 namespace P2PWallet.Api.Controllers
 {

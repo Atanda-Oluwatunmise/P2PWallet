@@ -93,11 +93,11 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class TransactionsView
     {
-        public string Name { get; set; } = string.Empty;
-        public string AccountNumber { get; set; } = string.Empty;
-        public double Amount { get; set; }
+        public string SenderInfo { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
+        public double TxnAmount { get; set; }
         public string TransType { get; set; } = string.Empty;
+        public string ReceiverInfo { get; set; } = string.Empty;
         public DateTime DateofTransaction { get; set; }
     }
 
@@ -107,4 +107,8 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Token { get; set; } = string.Empty;
     }
 
+    public class PinDto
+    {
+        public string UserPin { get; set; } = string.Empty;
+    }
 }

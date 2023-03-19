@@ -54,6 +54,27 @@ namespace P2PWallet.Services.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Pin",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PinId = table.Column<int>(type: "int", nullable: false),
+                    UserPin = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
+                    PinKey = table.Column<byte[]>(type: "varbinary(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pin", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Pin_Users_PinId",
+                        column: x => x.PinId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Transactions",
                 columns: table => new
                 {
@@ -89,6 +110,12 @@ namespace P2PWallet.Services.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Pin_PinId",
+                table: "Pin",
+                column: "PinId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_RecipientId",
                 table: "Transactions",
                 column: "RecipientId");
@@ -104,6 +131,9 @@ namespace P2PWallet.Services.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Accounts");
+
+            migrationBuilder.DropTable(
+                name: "Pin");
 
             migrationBuilder.DropTable(
                 name: "Transactions");

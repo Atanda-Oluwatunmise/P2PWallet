@@ -42,7 +42,8 @@ namespace P2PWallet.Services
             });
         }
 
-        public DbSet<Account> Accounts { get; set; }
+           public DbSet<Pin> Pin { get; set; }
+           public DbSet<Account> Accounts { get; set; }
            public DbSet<User> Users { get; set; }
            public DbSet<Transaction> Transactions { get; set; }
 
