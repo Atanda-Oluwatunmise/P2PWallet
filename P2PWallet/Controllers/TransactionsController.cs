@@ -20,19 +20,20 @@ namespace P2PWallet.Api.Controllers
 
         }
 
-        [HttpPut("Transfers"), Authorize]
+        [HttpPut("transfers"), Authorize]
         public async Task<ServiceResponse<AccountViewModel>> Transfers(TransferDto transferdto)
         {
             var result = await _transactionService.Transfers(transferdto);
             return result;
         }
 
-        [HttpGet("TransactionsHistory"), Authorize]
+        [HttpGet("transactionshistory"), Authorize]
         public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory()
         {
             var result = await _transactionService.UserTransactionsHistory();
             return result;
         }
 
+       
     }
 }

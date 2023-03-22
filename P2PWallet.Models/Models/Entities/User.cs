@@ -36,5 +36,6 @@ namespace P2PWallet.Models.Models.Entities
         public virtual ICollection<Transaction> ReceiverTransaction { get; set; }
 
         public virtual Pin UserPin { get; set; }
+        public virtual Deposit UserDeposit { get; set; }
     }
 }

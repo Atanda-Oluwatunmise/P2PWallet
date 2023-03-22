@@ -111,4 +111,34 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string UserPin { get; set; } = string.Empty;
     }
+
+    public class DepositDto
+    {
+        public double Amount { get; set; }
+    }
+
+    public class PaystackRequestDto
+    {
+        public string email { get; set; } = string.Empty;
+        public string currency { get; set; } = string.Empty;
+        public double amount { get; set; }
+        public string reference { get; set; } = string.Empty;
+
+    }
+
+    public class PaystackRequestView
+    {
+        public Boolean Status { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public Data  data { get; set; }
+
+    }
+    public class Data
+    {
+        public string Authorization_url { get; set; } = string.Empty;
+        public string Access_code { get; set; } = string.Empty;
+        public string Reference { get; set; } = string.Empty;
+
+    }
+
 }

@@ -41,7 +41,7 @@ namespace P2PWallet.Services
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
         }
-
+           public DbSet<Deposit> Deposit { get; set; }
            public DbSet<Pin> Pin { get; set; }
            public DbSet<Account> Accounts { get; set; }
            public DbSet<User> Users { get; set; }

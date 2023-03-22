@@ -8,10 +8,9 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Services.Interface
 {
-    public interface ITransactionService
+    public interface IPaymentService
     {
-        public Task<ServiceResponse<AccountViewModel>> Transfers(TransferDto transferdto);
-        public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory();
+        public Task<ServiceResponse<PaystackRequestView>> InitializePayment(DepositDto deposit);
 
     }
 }

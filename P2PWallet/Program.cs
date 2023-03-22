@@ -10,8 +10,11 @@ using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using Microsoft.AspNetCore.Authentication;
 using P2PWallet.Services.Interface;
+using NLog;
+using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
 
 // Add services to the container.
 
@@ -32,9 +35,14 @@ builder.Services.AddSwaggerGen(options => {
 builder.Services.AddScoped<IUserServices, UserServices>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ILoggerManager, LoggerManager>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<DataContext>(
                                            options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<DataContext>(
+                                           options => options.UseSqlServer(builder.Configuration.GetConnectionString("Payment")));
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

@@ -19,14 +19,14 @@ namespace P2PWallet.Api.Controllers
             _authService = authService;
         }
 
-        [HttpPost("CreatePin"), Authorize]
+        [HttpPost("createpin"), Authorize]
         public async Task<ServiceResponse<string>> CreatePin(PinDto pin)
         {
             var result = await _authService.CreatePin(pin);
             return result;
         }
 
-        [HttpPost("VerifyPin"), Authorize]
+        [HttpPost("verifypin"), Authorize]
         public async Task<ServiceResponse<string>> VerifyPin(PinDto pin)
         {
             var result = await _authService.VerifyPin(pin);

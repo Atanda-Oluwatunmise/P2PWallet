@@ -4,12 +4,23 @@ using Microsoft.Extensions.Configuration;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
+using HttpClient = System.Net.Http.HttpClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Net;
+using Newtonsoft.Json;
+using System.Net.Http.Json;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
+using System.Text.Unicode;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 
 namespace P2PWallet.Services.Services
 {
@@ -20,6 +31,7 @@ namespace P2PWallet.Services.Services
         private readonly DataContext _dataContext;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        static readonly HttpClient client = new HttpClient();
 
         public TransactionService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
@@ -179,5 +191,7 @@ namespace P2PWallet.Services.Services
         }
 
         
+
+
     }
 }

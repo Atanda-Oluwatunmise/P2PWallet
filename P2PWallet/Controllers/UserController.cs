@@ -24,7 +24,7 @@ namespace P2PWallet.Api.Controllers
 
         }
 
-        [HttpPost("Register")]
+        [HttpPost("register")]
         public async Task<ServiceResponse<UserViewModel>> Register(UserDto user)
         {
            var result =  await _userServices.Register(user);
@@ -32,14 +32,14 @@ namespace P2PWallet.Api.Controllers
            
         }
             
-        [HttpPost("Login")]
+        [HttpPost("login")]
         public async Task<ServiceResponse<LoginView>> Login(LoginDto loginreq)
         {
              var result = await _userServices.Login(loginreq);
              return result;
         }
 
-        [HttpPost("UserDetails")]
+        [HttpPost("userdetails")]
         public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch)
         {
             var result = await _userServices.GetUserDetails(userSearch);
@@ -47,7 +47,7 @@ namespace P2PWallet.Api.Controllers
         }
 
 
-        [HttpGet("AccountDetails"), Authorize]
+        [HttpGet("accountdetails"), Authorize]
         public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {
             var result = await _userServices.GetMyAccountNumber();
