@@ -12,6 +12,8 @@ namespace P2PWallet.Services.Interface
     {
         public Task<ServiceResponse<string>> CreatePin(PinDto pin);
         public Task<ServiceResponse<string>> VerifyPin(PinDto pin);
+        public Task<ServiceResponse<string>> ValidateUser();
+
 
     }
 }

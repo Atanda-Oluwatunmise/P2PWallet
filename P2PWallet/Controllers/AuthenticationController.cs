@@ -33,6 +33,13 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpGet("validateuser"), Authorize]
+        public async Task<ServiceResponse<string>> ValidateUser()
+        {
+            var result = await _authService.ValidateUser();
+            return result;
+        }
+
     }
 
 

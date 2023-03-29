@@ -40,19 +40,22 @@ namespace P2PWallet.Services.Services
             public async Task<ServiceResponse<string>> CreatePin(PinDto pin)
             {
                 var response = new ServiceResponse<string>();
-                //string resData = "Pin created successfully";
+            //string resData = "Pin created successfully";
 
             try
             {
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var pinAccount = await _dataContext.Users.Include("UserPin").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+                    var pinAccount = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
 
+                    if (pinAccount != null && pinAccount.Userpin == null)
+                    //{
+                    //    throw new Exception("Already created a Pin!");
+                    //}
 
-                    if (pinAccount != null)
+                    //if (pinAccount != null)
                     {
-
                         CreatePinHash(pin.UserPin,
                             out byte[] pinKey, out byte[] pinHash);
 
@@ -72,8 +75,8 @@ namespace P2PWallet.Services.Services
             }
             catch (Exception ex)
             {
-                response.Status = false; 
-                response.Data = ex.Message;
+                response.Status = false;
+                response.StatusMessage = ex.Message;
             }
             return response;
         }
@@ -124,6 +127,30 @@ namespace P2PWallet.Services.Services
             catch (Exception ex) {
                 response.Status = false; 
                 response.Data = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<string>> ValidateUser()
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinUser = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
+
+                    if (loggedinUser.Userpin == null)
+                    {
+                        response.Data = "Never created a Pin";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
             }
             return response;
         }

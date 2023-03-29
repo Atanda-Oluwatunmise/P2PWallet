@@ -33,11 +33,21 @@ namespace P2PWallet.Services
                 entity.HasOne(d => d.SenderUser)
                 .WithMany(p => p.UserTransaction)
                 .HasForeignKey(d => d.SenderId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.ClientSetNull);
 
                 entity.HasOne(d => d.ReceiverUser)
                 .WithMany(p => p.ReceiverTransaction)
                 .HasForeignKey(d => d.RecipientId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<Deposit>(entity =>
+            {
+                entity.HasOne(e => e.DepositUser)
+                .WithMany(f => f.UserDeposit)
+                .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
         }

@@ -18,7 +18,12 @@ namespace P2PWallet.Models.Models.Entities
         public string Currency { get; set; } = string.Empty;
         public double Amount { get; set; }
         public string TxnRef { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string? Channel { get; set; } = string.Empty;
+        public string? CardType { get; set; } = string.Empty;
+        public string? Bank { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? CustomerCode { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
     
         public virtual User DepositUser { get; set; }

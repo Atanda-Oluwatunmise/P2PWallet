@@ -17,6 +17,8 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using P2PWallet.Services.Interface;
+using P2PWallet.Models.Models.DataObjects;
+using P2PWallet.Models.Models.DataObjects.WebHook;
 
 namespace P2PWallet.Services.Services
 {
@@ -73,7 +75,7 @@ namespace P2PWallet.Services.Services
                     {
                         if (deposit.Amount <= 0)
                         {
-                            throw new Exception("Amount cannot be = 0");
+                            throw new Exception("Amount cannot be 0");
                         }
                         var data = new PaystackRequestDto
                         {
@@ -104,20 +106,24 @@ namespace P2PWallet.Services.Services
                         var respData = JsonConvert.DeserializeObject<PaystackRequestView>(responseBody);
                         response.Data = respData;
 
-                        var newresp = new Deposit()
+                        if (respData != null)
                         {
-                            UserId = userAccount.Id,
-                            UserName = userAccount.Username,
-                            Currency = data.currency,
-                            Amount = deposit.Amount,
-                            TxnRef = data.reference,
-                            Email = data.email,
-                            CreatedAt = DateTime.UtcNow
-                        };
+                            var newresp = new Deposit()
+                            {
+                                UserId = userAccount.Id,
+                                UserName = userAccount.Username,
+                                Currency = data.currency,
+                                Amount = deposit.Amount,
+                                TxnRef = data.reference,
+                                Email = data.email,
+                                CreatedAt = DateTime.Now,
+                                Status = "pending",
+                                
+                            };
 
-                        await _dataContext.Deposit.AddAsync(newresp);
-                        await _dataContext.SaveChangesAsync();
- 
+                            await _dataContext.Deposit.AddAsync(newresp);
+                            await _dataContext.SaveChangesAsync();
+                        }
                     }
                 }
 
@@ -126,9 +132,72 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
-            }
+            } 
             return response;
 
+        }
+
+        public async Task<ServiceResponse<WebhookDto>> PayStackWebHook(WebhookDto eventData)
+        {
+            var response = new ServiceResponse<WebhookDto>();
+            WebhookDto webhookresponse = new WebhookDto();
+
+            try
+            {
+                var paymentinfo = await _dataContext.Deposit.Where(x => x.TxnRef == eventData.data.reference).FirstOrDefaultAsync();
+                var payerAccount = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == paymentinfo.UserId).FirstOrDefaultAsync();
+
+                if (payerAccount == null)
+                {
+                    throw new Exception("Error");
+                }
+
+                if (paymentinfo.Status == "Successful")
+                {
+                    throw new Exception("Error");
+                }
+
+                if (!(eventData.@event == "charge.success") || !(eventData.data.reference == paymentinfo.TxnRef))
+                {
+                    paymentinfo.Status = "Failed";
+                    paymentinfo.CreatedAt = DateTime.Now;
+                }
+
+                response.Data = webhookresponse;
+
+                paymentinfo.Status = "Successful";
+                paymentinfo.Bank = eventData.data.authorization.bank;
+                paymentinfo.CardType = eventData.data.authorization.card_type;
+                paymentinfo.Channel = eventData.data.channel;
+                paymentinfo.CustomerCode = eventData.data.customer.customer_code;
+                paymentinfo.CreatedAt = DateTime.Now;
+
+                payerAccount.UserAccount.Balance = payerAccount.UserAccount.Balance + paymentinfo.Amount;
+
+                await _dataContext.SaveChangesAsync();
+
+
+                var txnDeposit = new Transaction()
+                {
+                    RecipientId = payerAccount.Id,
+                    RecipientAccountNumber = payerAccount.UserAccount.AccountNumber,
+                    Reference = eventData.data.reference,
+                    Amount = paymentinfo.Amount,
+                    Currency = paymentinfo.Currency,
+                    DateofTransaction = paymentinfo.CreatedAt
+                };
+
+                await _dataContext.Transactions.AddAsync(txnDeposit);
+                await _dataContext.SaveChangesAsync();
+
+            }
+            catch (Exception ex) 
+            { 
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+
+            return response;
         }
     }
 }

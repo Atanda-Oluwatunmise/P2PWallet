@@ -93,7 +93,7 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class TransactionsView
     {
-        public string SenderInfo { get; set; } = string.Empty;
+        public string? SenderInfo { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
         public double TxnAmount { get; set; }
         public string TransType { get; set; } = string.Empty;

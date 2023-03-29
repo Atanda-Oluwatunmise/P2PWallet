@@ -40,6 +40,30 @@ namespace P2PWallet.Services.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+
+        public static string ReferenceGenerator()
+        {
+            Random random = new Random();
+            char[] chars =
+                           "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
+            int size = 25;
+            byte[] data = new byte[size];
+
+            using (RNGCryptoServiceProvider crypto = new RNGCryptoServiceProvider())
+            {
+                crypto.GetBytes(data);
+
+            }
+            StringBuilder result = new StringBuilder(size);
+            foreach (byte b in data)
+            {
+                result.Append(chars[b % (chars.Length)]);
+            }
+            return result.ToString();
+
+
+        }
+
         public async Task<ServiceResponse<AccountViewModel>> Transfers(TransferDto transferdto)
         {
             var response = new ServiceResponse<AccountViewModel>();
@@ -78,6 +102,11 @@ namespace P2PWallet.Services.Services
                     throw new Exception("Insufficient Account Balance");
                 }
 
+                if (amount < 0 || amount == 0)
+                {
+                    throw new Exception("Amount cannot be less than or equal to 0");
+                }
+
                 if (senderaccount != null || userAccountNumber.Balance == amount || amount < userAccountNumber.Balance)
                 {
 
@@ -111,9 +140,10 @@ namespace P2PWallet.Services.Services
                     RecipientId = receiverAccount.UserId,
                     SenderAccountNumber = userAccountNumber.AccountNumber,
                     RecipientAccountNumber = receiverAccount.AccountNumber,
+                    Reference = ReferenceGenerator(),
                     Amount = amount,
                     Currency = userAccountNumber.Currency,
-                    DateofTransaction = DateTime.UtcNow
+                    DateofTransaction = DateTime.Now
                 };
 
                 await _dataContext.Transactions.AddAsync(txns);
@@ -137,50 +167,60 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-                    if (loggedUserId != null)
-                    {
-
-                        var txns = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
-                            .Where(x => x.SenderId == loggedUserId).ToListAsync();
-
-
-                        foreach (var txn in txns)
+                        if (loggedUserId != null)
                         {
+                            var txns = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
+                                .Where(x => x.SenderId == loggedUserId).ToListAsync();
 
-                            var debitdata = new TransactionsView()
+                            foreach (var txn in txns)
                             {
-                                SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
-                                Currency = txn.Currency,
-                                TxnAmount = txn.Amount,
-                                TransType = "DEBIT",
-                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
-                                DateofTransaction = txn.DateofTransaction
-                            };
-                            transactions.Add(debitdata);
-                        }
+                                var debitdata = new TransactionsView()
+                                {
+                                    SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
+                                    Currency = txn.Currency,
+                                    TxnAmount = txn.Amount,
+                                    TransType = "DEBIT",
+                                    ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                                    DateofTransaction = txn.DateofTransaction
+                                };
+                                transactions.Add(debitdata);
+                            }
 
+                            var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
+                                .Where(x => x.RecipientId == loggedUserId).ToListAsync();
 
-                        var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
-                            .Where(x => x.RecipientId == loggedUserId).ToListAsync();
-
-
-                        foreach (var txn in trxns) { 
-                            var creditdata = new TransactionsView()
+                            foreach (var txn in trxns)
                             {
-                                SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
-                                Currency = txn.Currency,
-                                TxnAmount = txn.Amount,
-                                TransType = "CREDIT",
-                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
-                                DateofTransaction = txn.DateofTransaction
-                            };
-                            transactions.Add(creditdata);
+                                if (txn.SenderId == null)
+                                {
+                                    var creditdata = new TransactionsView()
+                                    {
+                                        SenderInfo = "PAYSTACK_FUNDING",
+                                        Currency = txn.Currency,
+                                        TxnAmount = txn.Amount,
+                                        TransType = "CREDIT",
+                                        ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                                        DateofTransaction = txn.DateofTransaction
+                                    };
+                                    transactions.Add(creditdata);
+                            }
+                                if (txn.SenderId != null)
+                                    {
+                                        var creditdata = new TransactionsView()
+                                        {
+                                            SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
+                                            Currency = txn.Currency,
+                                            TxnAmount = txn.Amount,
+                                            TransType = "CREDIT",
+                                            ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                                            DateofTransaction = txn.DateofTransaction
+                                        };
+                                        transactions.Add(creditdata);
+                                    }
+                            }
                         }
-
+                        response.Data = transactions.OrderByDescending(x => x.DateofTransaction).ToList();
                     }
-                    response.Data = transactions.OrderByDescending(x => x.DateofTransaction).ToList();
-                }
             }
             catch (Exception ex)
             {
@@ -189,9 +229,5 @@ namespace P2PWallet.Services.Services
             }
             return response;
         }
-
-        
-
-
     }
 }

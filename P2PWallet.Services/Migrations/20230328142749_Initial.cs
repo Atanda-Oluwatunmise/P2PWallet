@@ -54,6 +54,35 @@ namespace P2PWallet.Services.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Deposit",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Currency = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Amount = table.Column<double>(type: "float", nullable: false),
+                    TxnRef = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Channel = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CardType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Bank = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CustomerCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Deposit", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Deposit_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Pin",
                 columns: table => new
                 {
@@ -80,10 +109,11 @@ namespace P2PWallet.Services.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SenderId = table.Column<int>(type: "int", nullable: false),
-                    RecipientId = table.Column<int>(type: "int", nullable: false),
-                    SenderAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RecipientAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SenderId = table.Column<int>(type: "int", nullable: true),
+                    RecipientId = table.Column<int>(type: "int", nullable: true),
+                    SenderAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RecipientAccountNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Reference = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Amount = table.Column<double>(type: "float", nullable: false),
                     Currency = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DateofTransaction = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -110,6 +140,11 @@ namespace P2PWallet.Services.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Deposit_UserId",
+                table: "Deposit",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Pin_PinId",
                 table: "Pin",
                 column: "PinId",
@@ -131,6 +166,9 @@ namespace P2PWallet.Services.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Accounts");
+
+            migrationBuilder.DropTable(
+                name: "Deposit");
 
             migrationBuilder.DropTable(
                 name: "Pin");
