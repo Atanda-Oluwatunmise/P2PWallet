@@ -30,12 +30,15 @@ namespace P2PWallet.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         static readonly HttpClient client = new HttpClient();
+        private readonly IMailService _mailService;
 
-        public PaymentService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+
+        public PaymentService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService)
         {
             _dataContext = dataContext;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _mailService = mailService;
         }
 
         public static string ReferenceGenerator()
@@ -187,8 +190,19 @@ namespace P2PWallet.Services.Services
                     DateofTransaction = paymentinfo.CreatedAt
                 };
 
+                var deposit_mail = payerAccount.Email;
+                var deposit_Name = payerAccount.Username;
+                var deposit_Amount = txnDeposit.Amount;
+                var deposit_Balance = payerAccount.UserAccount.Balance;
+                var DepositInfo = "was deposited to";
+                var Deptrantype = "Deposit";
+                var Depositdetails = payerAccount.FirstName + " " + payerAccount.LastName;
+                var DepositAcount = "Via PAYSTACK";
+                var DepositDate = txnDeposit.DateofTransaction;
+
                 await _dataContext.Transactions.AddAsync(txnDeposit);
                 await _dataContext.SaveChangesAsync();
+                await _mailService.SendAsync(deposit_mail, deposit_Name, Deptrantype, deposit_Amount.ToString(), DepositInfo, Depositdetails, DepositAcount, DepositDate.ToString("yyyy-MM-dd"), deposit_Balance.ToString());
 
             }
             catch (Exception ex) 

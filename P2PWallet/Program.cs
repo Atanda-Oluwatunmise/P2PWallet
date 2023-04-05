@@ -12,15 +12,35 @@ using Microsoft.AspNetCore.Authentication;
 using P2PWallet.Services.Interface;
 using NLog;
 using Microsoft.Extensions.Configuration;
-using P2PWallet.Api.Configuration;
 using MailKit;
+using IMailService = P2PWallet.Services.Interface.IMailService;
+using MailService = P2PWallet.Services.Services.MailService;
+using P2PWallet.Models.Models.Entities;
+using P2PWallet.Models.Models.DataObjects;
+using Microsoft.AspNetCore.Identity;
+using FluentValidation.AspNetCore;
+using System.Reflection;
+using FluentValidation;
+//using FluentValidation.AspNetCore;
+//using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+                .AddFluentValidation(options =>
+                {
+                    // Validate child properties and root collection elements
+                    options.ImplicitlyValidateChildProperties = true;
+                    options.ImplicitlyValidateRootCollectionElements = true;
+                    // Automatic registration of validators in assembly
+                    options.RegisterValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+                });
+builder.Services.AddTransient<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
+builder.Services.AddTransient<IValidator<ChangePinDto>, ChangePinValidator>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -43,7 +63,9 @@ builder.Services.AddScoped<ILoggerManager, LoggerManager>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.Configure<MailSettings>(builder.Configuration.GetSection(nameof(MailSettings)));
+builder.Services.Configure<DataProtectionTokenProviderOptions>(opts => opts.TokenLifespan = TimeSpan.FromHours(10));
+var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
+builder.Services.AddSingleton(emailConfig);
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

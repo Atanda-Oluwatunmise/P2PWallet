@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.EntityFrameworkCore;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
+using P2PWallet.Services.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace P2PWallet.Api.Controllers
 {
@@ -12,11 +16,13 @@ namespace P2PWallet.Api.Controllers
     {
        private readonly DataContext _dataContext;
        private readonly IAuthService _authService;
+        private readonly IUserServices _userServices;
 
-        public AuthenticationController(DataContext dataContext, IAuthService authService)
+        public AuthenticationController(DataContext dataContext, IAuthService authService, IUserServices userServices)
         {
             _dataContext = dataContext;
             _authService = authService;
+            _userServices = userServices;
         }
 
         [HttpPost("createpin"), Authorize]
@@ -40,7 +46,27 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-    }
+        [HttpPost("forgot-password")]
+        public async Task<ServiceResponse<string>> ForgotPassword(string email)
+        {
+            var result = await _authService.ForgotPassword(email);    
+            return result;
+        }
 
+        [HttpPost("change-password"), Authorize]
+        public async Task<ServiceResponse<string>> ChangePassword(ChangePasswordDto changepassword)
+        {
+
+            var result = await _authService.ChangePassword(changepassword);
+            return result;
+        }
+        [HttpPost("change-pin"), Authorize]
+        public async Task<ServiceResponse<string>> ChangePin(ChangePinDto changepin)
+        {
+            var result = await _authService.ChangePin(changepin);
+            return result;
+        }
+
+    }
 
 }

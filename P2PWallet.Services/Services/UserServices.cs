@@ -41,7 +41,7 @@ namespace P2PWallet.Services.Services
             return await _dataContext.Users.AnyAsync(x => x.Email == emailName);
         }
 
-        private void CreatePasswordHash(string password, out byte[] passwordKey, out byte[] passwordHash)
+        public void CreatePasswordHash(string password, out byte[] passwordKey, out byte[] passwordHash)
         {
             using (var hmac = new HMACSHA512())
             {
@@ -128,7 +128,7 @@ namespace P2PWallet.Services.Services
             }
         }
 
-        private string CreateJWT(User user)
+        public string CreateJWT(User user)
         {
             List<Claim> claims = new List<Claim>()
             {

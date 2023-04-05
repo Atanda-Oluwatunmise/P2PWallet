@@ -1,4 +1,5 @@
-﻿using P2PWallet.Models.Models.DataObjects;
+﻿using Microsoft.AspNetCore.Mvc;
+using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,8 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<string>> CreatePin(PinDto pin);
         public Task<ServiceResponse<string>> VerifyPin(PinDto pin);
         public Task<ServiceResponse<string>> ValidateUser();
-
-
+        public Task<ServiceResponse<string>> ForgotPassword(string email);
+        public Task<ServiceResponse<string>> ChangePassword(ChangePasswordDto changepassword);
+        public Task<ServiceResponse<string>> ChangePin(ChangePinDto changepin);
     }
 }

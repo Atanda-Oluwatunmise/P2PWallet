@@ -13,7 +13,7 @@ namespace P2PWallet.Models.Models.Entities
 
         public Account()
         {
-            Balance = 10000.00;
+            //Balance = 10000.00;
             Currency = "NGN";
         }
 

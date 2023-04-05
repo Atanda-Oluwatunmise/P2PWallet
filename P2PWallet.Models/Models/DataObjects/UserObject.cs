@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FluentValidation;
 
 namespace P2PWallet.Models.Models.DataObjects
 {
@@ -139,6 +140,54 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Access_code { get; set; } = string.Empty;
         public string Reference { get; set; } = string.Empty;
 
+    }
+
+    public class ResetPasswordDto
+    {
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class ChangePasswordDto
+    {
+        public string Username { get; set; }
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
+        public string ConfirmPassword { get; set; }
+    }
+
+    public class ChangePasswordValidator : AbstractValidator<ChangePasswordDto>
+    {
+        public ChangePasswordValidator()
+        {
+            RuleFor(x => x.Username).NotNull().NotEmpty().Length(1, 20).WithMessage("Please Enter your Username."); 
+            RuleFor(x => x.CurrentPassword).NotNull().NotEmpty().Length(1, 20).WithMessage("Please Enter your current password.");
+            RuleFor(p => p.NewPassword).NotEmpty().WithMessage("Your password cannot be empty")
+                    .MinimumLength(8).WithMessage("Your password length must be at least 8.")
+                    .MaximumLength(16).WithMessage("Your password length must not exceed 16.")
+                    .Matches(@"[A-Z]+").WithMessage("Your password must contain at least one uppercase letter.")
+                    .Matches(@"[a-z]+").WithMessage("Your password must contain at least one lowercase letter.")
+                    .Matches(@"[0-9]+").WithMessage("Your password must contain at least one number.")
+                    .Matches(@"[\@\!\?\*\.]+").WithMessage("Your password must contain at least one (!? *.).");
+            RuleFor(x => x.ConfirmPassword).NotEmpty().WithMessage("Please confirm your password.");
+
+        }
+    }
+
+    public class ChangePinDto
+    {
+        public string CurrentPin { get; set; }
+        public string NewPin { get; set; }
+        public string ConfirmPin { get; set; }
+    }
+
+    public class ChangePinValidator : AbstractValidator<ChangePinDto>
+    {
+        public ChangePinValidator()
+        {
+            RuleFor(x => x.CurrentPin).NotNull().NotEmpty().Length(4).WithMessage("Enter your current Pin");
+            RuleFor(x => x.NewPin).NotNull().NotEmpty().Must(x => x.ToString().Length == 4).WithMessage("Must be 4 numeric digits");
+            RuleFor(x => x.ConfirmPin).NotNull().NotEmpty().Must(x => x.ToString().Length == 4).WithMessage("Must be 4 numeric digits");
+        }
     }
 
 }
