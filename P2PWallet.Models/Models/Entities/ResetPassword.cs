@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -8,14 +7,15 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Models.Models.Entities
 {
-    public class Pin
+    public class ResetPassword
     {
-        [Key]
         public int Id { get; set; }
         [ForeignKey("User")]
         public int UserId { get; set; }
-        public byte[] UserPin { get; set; } = new byte[32];
-        public byte[] PinKey { get; set; } = new byte[32];
-        public virtual User PinUser { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
+        public DateTime TokenExpires { get; set; }
+        public virtual User ResetUser { get; set; }
     }
 }
+ 

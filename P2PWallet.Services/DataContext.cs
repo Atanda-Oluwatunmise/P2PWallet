@@ -14,20 +14,6 @@ namespace P2PWallet.Services
         { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //modelBuilder.Entity<User>(entity =>
-            //{
-            //    entity.HasMany<Transaction>()
-            //    .WithOne(c => c.User);
-            //});
-
-            //modelBuilder.Entity<Transaction>(entity =>
-            //{
-            //    entity.HasOne(d => d.User)
-            //    .WithMany(p => p.UserTransaction)
-            //    .HasForeignKey(d => d.SenderId)
-            //    .HasConstraintName("FK_Users_Transactions");
-            //});
-
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.HasOne(d => d.SenderUser)
@@ -50,12 +36,56 @@ namespace P2PWallet.Services
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
+
+            modelBuilder.Entity<Pin>(entity =>
+            {
+                entity.HasOne(e => e.PinUser)
+                .WithMany(f => f.Userpin)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<SecurityQuestion>(entity =>
+            {
+                entity.HasOne(e => e.UserSecurity)
+                .WithMany(f => f.UserSecurityQuestion)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+            
+            modelBuilder.Entity<ResetPassword>(entity =>
+            {
+                entity.HasOne(e => e.ResetUser)
+                .WithMany(f => f.UserResetPassword)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            }); 
+            
+            modelBuilder.Entity<ResetPin>(entity =>
+            {
+                entity.HasOne(e => e.ResetUserPin)
+                .WithMany(f => f.UserResetPin)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
+
+            modelBuilder.Entity<ImageDetail>(entity =>
+            {
+                entity.HasOne(e => e.UserImage)
+                .WithOne(f => f.UserImageDetail)
+                .HasForeignKey<ImageDetail>(c => c.ImageUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
         }
            public DbSet<Deposit> Deposit { get; set; }
            public DbSet<Pin> Pin { get; set; }
            public DbSet<Account> Accounts { get; set; }
            public DbSet<User> Users { get; set; }
            public DbSet<Transaction> Transactions { get; set; }
+           public DbSet<SecurityQuestion> SecurityQuestions { get; set; }
+           public DbSet<ResetPassword> ResetPasswords { get; set; }
+           public DbSet<ResetPin> ResetPins { get; set; }
+           public DbSet<ImageDetail> ImageDetails { get; set; }
 
     }
 }

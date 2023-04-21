@@ -12,8 +12,8 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230328142749_Initial")]
-    partial class Initial
+    [Migration("20230410012217_NewInitialThree")]
+    partial class NewInitialThree
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -136,6 +136,23 @@ namespace P2PWallet.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("Pin");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.SecurityQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SecurityQuestions");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>

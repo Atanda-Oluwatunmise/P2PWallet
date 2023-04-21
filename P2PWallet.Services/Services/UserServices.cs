@@ -1,10 +1,14 @@
 ﻿using Aspose.Pdf;
 using Aspose.Pdf.Operators;
 using Azure;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
@@ -27,14 +31,24 @@ namespace P2PWallet.Services.Services
         private readonly DataContext _dataContext;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IMailService _mailService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public UserServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public UserServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment webHostEnvironment)
         {
             _dataContext = dataContext;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _mailService = mailService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
+
+        public string GenerateEmailToken()
+        {
+            string token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            return token;
+        }
 
         public async Task<bool> EmailAlreadyExists(string emailName)
         {
@@ -49,6 +63,36 @@ namespace P2PWallet.Services.Services
                 passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             }
         }
+
+
+        public async Task<ServiceResponse<string>> VerifyEmail(string verifyemail)
+        {
+            var response = new ServiceResponse<string>();
+            var emailuser = await _dataContext.Users.FirstOrDefaultAsync(x => x.Email == verifyemail);
+            try
+            {
+                var token = GenerateEmailToken();
+                var encodedToken = Encoding.UTF8.GetBytes(token);
+                var validToken = WebEncoders.Base64UrlEncode(encodedToken);
+
+                string url = $"{_configuration.GetSection("ResetPassword:LoginUrl").Value!}?token={validToken}";
+                await _mailService.ResetPasswordEmailAsync(verifyemail, "Email Verification", "<h1>Your email has been verified</h1>",
+                    $"<p><a href={url}>Proceed to log in </a>" +
+                    $"or paste {url} in your web browser</p>");
+
+                emailuser.VerificationToken = validToken;
+                emailuser.UserVerifiedAt = DateTime.Now;
+
+                await _dataContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<UserViewModel>> Register(UserDto user)
         {
             //Initializing a collection
@@ -80,26 +124,30 @@ namespace P2PWallet.Services.Services
                 //Adding the new instance in the database
                 await _dataContext.Users.AddAsync(newuser);
                 await _dataContext.SaveChangesAsync();
-                //response.Data = new UserViewModel();
 
-                string userAccounNumber = string.Empty;
-                string startWith = "1000";
-                Random generator = new Random();
-                string r = generator.Next(0, 999999).ToString("D6");
-                userAccounNumber = startWith + r;
-
-                if (newuser != null && await UserAlreadyExists(user.Username))
+                var verifyemail = await VerifyEmail(user.Email);
+                if (verifyemail != null)
                 {
-                    var newaccount = new Account()
-                    {
-                        UserId = newuser.Id,
-                        AccountNumber = userAccounNumber,
-                        Balance = account.Balance
-                    };
-                    await _dataContext.Accounts.AddAsync(newaccount);
-                    await _dataContext.SaveChangesAsync();
+                    string userAccounNumber = string.Empty;
+                    string startWith = "1000";
+                    Random generator = new Random();
+                    string r = generator.Next(0, 999999).ToString("D6");
+                    userAccounNumber = startWith + r;
 
+                    if (newuser != null && await UserAlreadyExists(user.Username))
+                    {
+                        var newaccount = new Account()
+                        {
+                            UserId = newuser.Id,
+                            AccountNumber = userAccounNumber,
+                            Balance = account.Balance
+                        };
+                        await _dataContext.Accounts.AddAsync(newaccount);
+                        await _dataContext.SaveChangesAsync();
+
+                    }
                 }
+
             }
             catch (Exception ex)
             {
@@ -128,7 +176,7 @@ namespace P2PWallet.Services.Services
             }
         }
 
-        public string CreateJWT(User user)
+        private string CreateJWT(User user)
         {
             List<Claim> claims = new List<Claim>()
             {
@@ -162,7 +210,6 @@ namespace P2PWallet.Services.Services
             try
             {
                 var user = await _dataContext.Users.Include("UserAccount").FirstOrDefaultAsync(x => x.Username == loginreq.Username);
-
                 if (user == null)
                 {
                     throw new Exception("Username/Password is Incorrect");
@@ -171,6 +218,11 @@ namespace P2PWallet.Services.Services
                 if (!VerifyPasswordHash(loginreq.Password, user.PasswordKey, user.Password))
                 {
                     throw new Exception("Username/Password is Incorrect");
+                }
+
+                if (user.VerificationToken == null)
+                {
+                    throw new Exception("Email not Verified!");
                 }
 
                 var logindata = new LoginView()
@@ -194,7 +246,7 @@ namespace P2PWallet.Services.Services
         public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {
             var response = new ServiceResponse<List<AccountDetails>>();
-            List <AccountDetails> accountDetails = new List<AccountDetails>();
+            List<AccountDetails> accountDetails = new List<AccountDetails>();
             try
             {
                 if (_httpContextAccessor.HttpContext != null)
@@ -207,8 +259,13 @@ namespace P2PWallet.Services.Services
                     {
                         var data = new AccountDetails()
                         {
+                            FirstName = userAccount.User.FirstName,
+                            LastName = userAccount.User.LastName,
                             AccountName = userAccount.User.FirstName + " " + userAccount.User.LastName,
                             AccountNumber = userAccount.AccountNumber,
+                            Phonenumber = userAccount.User.PhoneNumber,
+                            Email = userAccount.User.Email,
+                            Address = userAccount.User.Address,
                             Balance = userAccount.Balance
                         };
                         accountDetails.Add(data);
@@ -221,10 +278,10 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
-            }  
+            }
             return response;
-        }   
-        
+        }
+
         public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch)
         {
             var response = new ServiceResponse<List<SearchAccountDetails>>();
@@ -239,21 +296,185 @@ namespace P2PWallet.Services.Services
                 {
                     throw new Exception("Account does not exist");
                 }
-                    var userId = await _dataContext.Users.Include("UserAccount")
-                                .Where(x => x.UserAccount.UserId == searchUser.Id)
-                                .FirstOrDefaultAsync();
+                var userId = await _dataContext.Users.Include("UserAccount")
+                            .Where(x => x.UserAccount.UserId == searchUser.Id)
+                            .FirstOrDefaultAsync();
 
-                    if (userId != null)
+                if (userId != null)
+                {
+                    var data = new SearchAccountDetails()
                     {
-                        var data = new SearchAccountDetails()
-                        {
-                            AccountName = userId.FirstName + " " + userId.LastName,
-                            AccountNumber = userId.UserAccount.AccountNumber
-                        };
-                        userDetails.Add(data);
-                    }
-                    response.Data = userDetails;
+                        AccountName = userId.FirstName + " " + userId.LastName,
+                        AccountNumber = userId.UserAccount.AccountNumber
+                    };
+                    userDetails.Add(data);
+                }
+                response.Data = userDetails;
 
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<List<EditViewModel>>> EditUserInfo(EditViewModel request)
+        {
+            var response = new ServiceResponse<List<EditViewModel>>();
+            List<EditViewModel> updateInfo = new List<EditViewModel>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinUser = await _dataContext.Users.Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
+                    var verifypinuser = await _dataContext.ImageDetails.Include("UserImageDetail").Where(x => x.ImageUserId == loggedinId).FirstOrDefaultAsync();
+
+
+                    if (loggedinUser != null)
+                    {
+                        if (request.ImageFile.FileName != null || request.ImageFile.Length != 0)
+                        {
+                            var path = Path.Combine(_webHostEnvironment.WebRootPath, "Images/", request.ImageFile.FileName);
+                            byte[] FileBytes = File.ReadAllBytes(path);
+                            verifypinuser.ImageName = request.ImageFile.FileName;
+                            verifypinuser.Image = FileBytes;
+                        }
+
+                        loggedinUser.FirstName = request.FirstName;
+                        loggedinUser.LastName = request.LastName;
+                        loggedinUser.PhoneNumber = request.Phonenumber;
+                        loggedinUser.Address = request.Address;
+
+                        _dataContext.Users.Update(loggedinUser);
+                        _dataContext.ImageDetails.Update(verifypinuser);
+                        await _dataContext.SaveChangesAsync();
+
+                        response.Data = updateInfo;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<string>> SaveImage(ImageViewmodel imageview)
+        {
+            var response = new ServiceResponse<string>()
+;            try
+              {
+                    var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinUser = await _dataContext.Users.FindAsync(loggedinId);
+                    //var dbimageid = _dataContext.ImageDetails.Where( x => x.ImageId == loggedinId);
+
+                    //if (dbimageid != null)
+                    //{
+                    //    throw new Exception("Cannot save image");
+                    //}
+
+                    if (loggedinUser != null) { 
+
+                        foreach (var item in imageview.ImagePath)
+                        {
+                            if (item.FileName == null || item.FileName.Length == 0)
+                            {
+                                throw new Exception("Image cannot be empty");
+                            }
+                            var path = Path.Combine(_webHostEnvironment.WebRootPath, "Images/", item.FileName);
+
+                            using (FileStream stream = new FileStream(path, FileMode.Create))
+                            {
+                                await item.CopyToAsync(stream);
+                                stream.Close();
+                            }
+                            byte[] FileBytes = File.ReadAllBytes(path);
+
+                            var imagedetails = new ImageDetail
+                            {
+                                ImageUserId = loggedinUser.Id,
+                                ImageName = item.FileName,
+                                Image = FileBytes
+
+                            };
+
+                            await _dataContext.ImageDetails.AddAsync(imagedetails);
+                            await _dataContext.SaveChangesAsync();
+
+                            response.Data = "Image saved successfully";
+                        }
+                    }
+                }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<DisplayViewmodel> DisplayImage()
+        {
+            DisplayViewmodel imageview = new DisplayViewmodel();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var userid = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinuser = await _dataContext.ImageDetails.Where(x => x.ImageUserId == userid).FirstOrDefaultAsync();
+
+                    if (loggedinuser != null)
+                    {
+                        byte[] image = loggedinuser.Image;
+                        imageview = new DisplayViewmodel
+                        {
+                            ImagePath = image
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+            return imageview;
+        }
+
+        public async Task<ServiceResponse<string>> DeleteImage()
+        {
+            var response = new ServiceResponse<string>();
+            ImageDetail imagedetails = new ImageDetail();
+            try
+            {
+                if(_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedinuserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinuser = await _dataContext.ImageDetails.AsNoTracking().Where(x => x.ImageUserId == loggedinuserId).FirstOrDefaultAsync();
+
+                    if (loggedinuser == null)
+                    {
+                        throw new Exception("User is not authorized");
+                    }
+
+                    imagedetails = new ImageDetail()
+                    {
+                        Id = loggedinuser.Id,
+                        ImageUserId = loggedinuser.ImageUserId,
+                        ImageName = loggedinuser.ImageName,
+                        Image = loggedinuser.Image
+                    };
+
+                    _dataContext.ImageDetails.Remove(imagedetails);
+                    await _dataContext.SaveChangesAsync();
+
+                    response.Data = "Image Successfully deleted";
+                }
             }
             catch (Exception ex)
             {

@@ -1,11 +1,15 @@
-﻿using Azure.Messaging;
+﻿using Aspose.Pdf.Operators;
+using Azure;
+using Azure.Messaging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Org.BouncyCastle.Crypto.Macs;
 using P2PWallet.Models.Models.DataObjects;
+using P2PWallet.Models.Models.DataObjects.WebHook;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
 using System;
@@ -50,21 +54,18 @@ namespace P2PWallet.Services.Services
             public async Task<ServiceResponse<string>> CreatePin(PinDto pin)
             {
                 var response = new ServiceResponse<string>();
-            //string resData = "Pin created successfully";
 
             try
             {
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var pinAccount = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+                    var userAccount = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+                    var pinAccount = await _dataContext.Pin.Where(x => x.UserId == loggedUserId).FirstOrDefaultAsync();
 
-                    if (pinAccount != null && pinAccount.Userpin == null)
-                    //{
-                    //    throw new Exception("Already created a Pin!");
-                    //}
 
-                    //if (pinAccount != null)
+                    if (userAccount != null && pinAccount == null)
+
                     {
                         CreatePinHash(pin.UserPin,
                             out byte[] pinKey, out byte[] pinHash);
@@ -72,7 +73,7 @@ namespace P2PWallet.Services.Services
                         //instantiating the User constructor
                         var newpin = new Pin()
                         {
-                            PinId = pinAccount.Id,
+                            UserId = userAccount.Id,
                             UserPin = pinHash,
                             PinKey = pinKey
                         };
@@ -119,7 +120,7 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var loggedInUser = await _dataContext.Pin.Include("User").Where(x => x.PinId == userId).FirstOrDefaultAsync();
+                    var loggedInUser = await _dataContext.Pin.Include("PinUser").Where(x => x.UserId == userId).FirstOrDefaultAsync();
 
                     if (loggedInUser != null)
                     {
@@ -146,9 +147,9 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var loggedinUser = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
+                    var loggedinUser = await _dataContext.Pin.Include("PinUser").Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
 
-                    if (loggedinUser.Userpin == null)
+                    if (loggedinUser == null)
                     {
                         response.Data = "Never created a Pin";
                     }
@@ -162,25 +163,50 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
-        public async Task<ServiceResponse<string>> ForgotPassword(string email)
+        public async Task<ServiceResponse<string>> ForgotPassword(EmailDto emaill)
         {
+
             var response = new ServiceResponse<string>();
             try
             {
-                var user = await _dataContext.Users.Include("UserAccount").Where(x => x.Email == email).FirstOrDefaultAsync();
+                var user = await _dataContext.Users.Include("UserAccount").Where(x => x.Email == emaill.Email).FirstOrDefaultAsync();
                 if (user == null)
                 {
                     throw new Exception("Email cannot be found");
                 }
-                var token = _userServices.CreateJWT(user);
+                if (user.VerificationToken == null)
+                {
+                    throw new Exception("User  cannot change password");
+                }
+                var token = _userServices.GenerateEmailToken();
                 var encodedToken = Encoding.UTF8.GetBytes(token);
                 var validToken = WebEncoders.Base64UrlEncode(encodedToken);
 
-                string url = $"{_configuration.GetSection("ResetPassword:Reseturl").Value!}?email={email}&token={validToken}";
-                await _mailService.ResetPasswordEmailAsync(email, "Reset Password", "<h1>Follow the instruction to reset your password</h1>",
-                    $"<p>To reset your password <a href={url}>Click Here</a></p>");
+                string url = $"{_configuration.GetSection("ResetPassword:Reseturl").Value!}?token={validToken}";
+                var sendmail = await _mailService.ResetPasswordEmailAsync(emaill.Email, "Reset Password", "<h1>Follow the instruction to reset your password</h1>",
+                    $"<p>To reset your password <a href={url}>Click Here</a></p>" +
+                    $"<p>Or paste {url} in your web browser</p>");
 
-                response.Data = "Password Link has been sent to Email";
+                if (sendmail == true)
+                {
+                    var resetdetails = new ResetPassword
+                    {
+                        UserId = user.Id,
+                        Email = user.Email,
+                        Token = validToken,
+                        TokenExpires = DateTime.Now.AddDays(1)
+                    };
+                    await _dataContext.ResetPasswords.AddAsync(resetdetails);
+                    await _dataContext.SaveChangesAsync();
+
+                    response.Data = "Reset password link has been sent to the email successfully, go and verify";
+                }
+                if (sendmail != true)
+                {
+                    response.Status = false;
+                    response.Data = null;
+                    response.StatusMessage = "Password link cannot be sent";
+                }
             }
             catch (Exception ex)
             {
@@ -190,11 +216,125 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public async Task<ServiceResponse<string>> ForgotPin(EmailDto emaill)
+        {
+
+            var response = new ServiceResponse<string>();
+            try
+            {
+                var user = await _dataContext.Users.Include("UserAccount").Where(x => x.Email == emaill.Email).FirstOrDefaultAsync();
+                if (user == null)
+                {
+                    throw new Exception("Email cannot be found");
+                }
+                var token = _userServices.GenerateEmailToken();
+                var encodedToken = Encoding.UTF8.GetBytes(token);
+                var validToken = WebEncoders.Base64UrlEncode(encodedToken);
+
+                string url = $"{_configuration.GetSection("ResetPassword:ResetPin").Value!}?token={validToken}";
+                var sendmail = await _mailService.ResetPasswordEmailAsync(emaill.Email, "Reset Pin", "<h1>Follow the instruction to reset your pin</h1>",
+                    $"<p>To reset your pin, <a href={url}>click here</a></p>" +
+                    $"<p>or paste {url} in your web browser</p>");
+
+                if (sendmail == true)
+                {
+                    var resetdetails = new ResetPin
+                    {
+                        UserId = user.Id,
+                        Email = user.Email,
+                        PinToken = validToken,
+                        PinTokenExpires = DateTime.Now.AddDays(1)
+                    };
+                    await _dataContext.ResetPins.AddAsync(resetdetails);
+                    await _dataContext.SaveChangesAsync();
+
+                    response.Data = "Reset pin link has been sent to the email successfully, go and verify";
+                }
+                if (sendmail != true)
+                {
+                    response.Status = false;
+                    response.Data = null;
+                    response.StatusMessage = "Pin link cannot be sent";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+
+        public async Task<ServiceResponse<string>> ResetPassword(ResetPasswordRequest request)
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                var user = await _dataContext.ResetPasswords.Include("ResetUser").Where(x => x.Token == request.Token).FirstOrDefaultAsync();
+                if (user == null || user.TokenExpires < DateTime.Now)
+                {
+                    throw new Exception("Invalid token");
+                }
+                if (string.Compare(request.Password, request.ConfirmPassword) != 0)
+                {
+                    throw new Exception("Password does not match");
+                }
+                _userServices.CreatePasswordHash(request.ConfirmPassword, out byte[] passwordKey, out byte[] passwordHash);
+
+                user.ResetUser.Password = passwordHash;
+                user.ResetUser.PasswordKey = passwordKey;
+
+                _dataContext.SaveChanges();
+
+                response.Data = "Password successfully changed";
+            }
+            catch(Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+        
+        public async Task<ServiceResponse<string>> ResetPin(ResetPinRequest request)
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                var user = await _dataContext.ResetPins.Include("ResetUserPin").Where(x => x.PinToken == request.Token).FirstOrDefaultAsync();
+                var userdetail = await _dataContext.Pin.Include("PinUser").Where(x => x.UserId == user.UserId).FirstOrDefaultAsync();
+                if (user == null || user.PinTokenExpires < DateTime.Now)
+                {
+                    throw new Exception("Invalid token");
+                }
+                if (string.Compare(request.Pin, request.ConfirmPin) != 0)
+                {
+                    throw new Exception("Pin does not match");
+                }
+                _userServices.CreatePasswordHash(request.ConfirmPin, out byte[] pinkey, out byte[] pinHash);
+
+                userdetail.UserPin = pinHash;
+                userdetail.PinKey = pinkey;
+                //user.ResetUserPin.Userpin. .UserPin = pinHash;
+                //user.ResetUserPin.Userpin.PinKey = pinkey;
+
+                _dataContext.SaveChanges();
+
+                response.Data = "Pin reset successful";
+            }
+            catch(Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+
         public async Task<ServiceResponse<string>> ChangePassword(ChangePasswordDto changepassword)
         {
             var response = new ServiceResponse<string>();
-
-
             try
             {
                 if (_httpContextAccessor.HttpContext!= null)
@@ -202,20 +342,28 @@ namespace P2PWallet.Services.Services
                     var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                     var loggedinUser = await _dataContext.Users.Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
 
-                    var user = _dataContext.Users.Where(x => x.Username == changepassword.Username).FirstOrDefault();
-
-                    if (loggedinUser != user)
-                    {
-                        throw new Exception("Cannot Change Password");
-                    }
                     if (loggedinUser != null)
                     {
+                        if(changepassword.CurrentPassword == changepassword.ConfirmPassword)
+                        {
+                            throw new Exception("Cannot use old password");
+                        }
+
                         var userPassword = _userServices.VerifyPasswordHash(changepassword.CurrentPassword, loggedinUser.PasswordKey, loggedinUser.Password);
                         if (!userPassword)
                         {
                             throw new Exception("Current Password does not exist");
                         }
                     }
+
+                    var verifyquestion = await _dataContext.SecurityQuestions.Include("UserSecurity").Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
+
+                    if (changepassword.Answer != verifyquestion.Answer)
+                    {
+                        throw new Exception("Answer does not match");
+
+                    }
+
                     if (string.Compare(changepassword.NewPassword, changepassword.ConfirmPassword) != 0)
                     {
                         throw new Exception("Password does not match");
@@ -246,30 +394,110 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var loggedinUser = await _dataContext.Users.Include("Userpin").Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
+                    var loggedinUser = await _dataContext.Users.Include("Userpin").Include("UserSecurityQuestion").Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
+                    var verifypinuser = await _dataContext.Pin.Include("PinUser").Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
 
                     if (loggedinUser != null)
                     {
-                        var userpin = VerifyPinHash(changepin.CurrentPin, loggedinUser.Userpin.PinKey, loggedinUser.Userpin.UserPin);
+                        if(changepin.CurrentPin == changepin.ConfirmPin)
+                        {
+                            throw new Exception("Cannot use old pin");
+                        }
+                        
+
+                        var userpin = VerifyPinHash(changepin.CurrentPin, verifypinuser.PinKey, verifypinuser.UserPin);
                         if (!userpin)
                         {
                             throw new Exception("Current Pin does not exist");
                         }
                     }
+                    var verifyquestion = await _dataContext.SecurityQuestions.Include("UserSecurity").Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
+                 
+                    
+                    if(changepin.Answer != verifyquestion.Answer)
+                    {
+                        throw new Exception("Answer does not match");
+
+                    }
+
                     if (string.Compare(changepin.NewPin, changepin.ConfirmPin) != 0)
                     {
                         throw new Exception("Pin does not match");
                     }
-
                     CreatePinHash(changepin.ConfirmPin, out byte[] pinkey, out byte[] pinHash);
 
-                    loggedinUser.Userpin.UserPin = pinHash;
-                    loggedinUser.Userpin.PinKey = pinkey;
+                    verifypinuser.UserPin = pinHash;
+                    verifypinuser.PinKey = pinkey;
 
                      _dataContext.SaveChanges();
 
                     response.Data = "Pin successfully changed";
 
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<string>> AddSecurityDetails(SecurityQuestionDto details)
+        {
+            var response = new ServiceResponse<string>();
+
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var securityUser = await _dataContext.Users.Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+
+                    if (securityUser != null)
+
+                    {
+                        var securityDetails = new SecurityQuestion()
+                        {
+                            UserId = securityUser.Id,
+                            Question = details.Question,
+                            Answer = details.Answer
+                        };
+
+                        response.Data = "Security details saved successfully";
+
+                        await _dataContext.SecurityQuestions.AddAsync(securityDetails);
+                        await _dataContext.SaveChangesAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<SecurityViewModel>> GetSecuritydetail()
+        {
+            var response = new ServiceResponse<SecurityViewModel>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedinUser = await _dataContext.SecurityQuestions.Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
+
+                    if (loggedinUser != null)
+                    {
+
+                        var question = new SecurityViewModel
+                        {
+                            Question = loggedinUser.Question
+                        };
+                        response.Data = question;
+                    }
                 }
             }
             catch (Exception ex)

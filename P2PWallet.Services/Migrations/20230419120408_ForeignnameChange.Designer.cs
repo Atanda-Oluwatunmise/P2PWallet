@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using P2PWallet.Services;
 
@@ -11,9 +12,11 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230419120408_ForeignnameChange")]
+    partial class ForeignnameChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,12 +127,12 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ImageUserId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ImageUserId")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("ImageDetails");
@@ -356,7 +359,7 @@ namespace P2PWallet.Services.Migrations
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "UserImage")
                         .WithOne("UserImageDetail")
-                        .HasForeignKey("P2PWallet.Models.Models.Entities.ImageDetail", "ImageUserId")
+                        .HasForeignKey("P2PWallet.Models.Models.Entities.ImageDetail", "UserId")
                         .IsRequired();
 
                     b.Navigation("UserImage");

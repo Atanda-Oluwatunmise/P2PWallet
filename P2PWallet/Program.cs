@@ -40,6 +40,10 @@ builder.Services.AddControllers()
                 });
 builder.Services.AddTransient<IValidator<ChangePasswordDto>, ChangePasswordValidator>();
 builder.Services.AddTransient<IValidator<ChangePinDto>, ChangePinValidator>();
+builder.Services.AddTransient<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
+builder.Services.AddTransient<IValidator<ResetPinRequest>, ResetPinValidator>();
+builder.Services.AddTransient<IValidator<PinDto>, CreatePinValidator>();
+builder.Services.AddTransient<IValidator<EditViewModel>, EditDetailValidator>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -63,6 +67,8 @@ builder.Services.AddScoped<ILoggerManager, LoggerManager>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
 builder.Services.Configure<DataProtectionTokenProviderOptions>(opts => opts.TokenLifespan = TimeSpan.FromHours(10));
 var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
 builder.Services.AddSingleton(emailConfig);
@@ -90,6 +96,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//SeedingService.DataSeeding(app);
 app.UseHttpsRedirection();
 
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());

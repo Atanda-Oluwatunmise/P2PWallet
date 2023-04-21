@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using P2PWallet.Services;
 
@@ -11,9 +12,11 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230413062516_ResetPinMigration")]
+    partial class ResetPinMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -108,33 +111,6 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("Deposit");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<byte[]>("Image")
-                        .IsRequired()
-                        .HasColumnType("varbinary(max)");
-
-                    b.Property<string>("ImageName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ImageUserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ImageUserId")
-                        .IsUnique();
-
-                    b.ToTable("ImageDetails");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
                 {
                     b.Property<int>("Id")
@@ -143,12 +119,12 @@ namespace P2PWallet.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("PinId")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("PinKey")
                         .IsRequired()
                         .HasColumnType("varbinary(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
 
                     b.Property<byte[]>("UserPin")
                         .IsRequired()
@@ -156,7 +132,8 @@ namespace P2PWallet.Services.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("PinId")
+                        .IsUnique();
 
                     b.ToTable("Pin");
                 });
@@ -173,6 +150,9 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("EmailId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -180,12 +160,9 @@ namespace P2PWallet.Services.Migrations
                     b.Property<DateTime>("TokenExpires")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("EmailId");
 
                     b.ToTable("ResetPasswords");
                 });
@@ -202,6 +179,9 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("EmailId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PinToken")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -209,12 +189,9 @@ namespace P2PWallet.Services.Migrations
                     b.Property<DateTime>("PinTokenExpires")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("EmailId");
 
                     b.ToTable("ResetPins");
                 });
@@ -235,12 +212,12 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("SecurityId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SecurityId");
 
                     b.ToTable("SecurityQuestions");
                 });
@@ -297,33 +274,35 @@ namespace P2PWallet.Services.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("Password")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<byte[]>("PasswordKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("PhoneNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UserVerifiedAt")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("Username")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VerificationToken")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -352,31 +331,22 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("DepositUser");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
-                {
-                    b.HasOne("P2PWallet.Models.Models.Entities.User", "UserImage")
-                        .WithOne("UserImageDetail")
-                        .HasForeignKey("P2PWallet.Models.Models.Entities.ImageDetail", "ImageUserId")
-                        .IsRequired();
-
-                    b.Navigation("UserImage");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
                 {
-                    b.HasOne("P2PWallet.Models.Models.Entities.User", "PinUser")
-                        .WithMany("Userpin")
-                        .HasForeignKey("UserId")
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "User")
+                        .WithOne("Userpin")
+                        .HasForeignKey("P2PWallet.Models.Models.Entities.Pin", "PinId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("PinUser");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ResetPassword", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "ResetUser")
                         .WithMany("UserResetPassword")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("EmailId")
                         .IsRequired();
 
                     b.Navigation("ResetUser");
@@ -386,7 +356,7 @@ namespace P2PWallet.Services.Migrations
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "ResetUserPin")
                         .WithMany("UserResetPin")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("EmailId")
                         .IsRequired();
 
                     b.Navigation("ResetUserPin");
@@ -396,7 +366,7 @@ namespace P2PWallet.Services.Migrations
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "UserSecurity")
                         .WithMany("UserSecurityQuestion")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("SecurityId")
                         .IsRequired();
 
                     b.Navigation("UserSecurity");
@@ -426,9 +396,6 @@ namespace P2PWallet.Services.Migrations
 
                     b.Navigation("UserDeposit");
 
-                    b.Navigation("UserImageDetail")
-                        .IsRequired();
-
                     b.Navigation("UserResetPassword");
 
                     b.Navigation("UserResetPin");
@@ -437,7 +404,8 @@ namespace P2PWallet.Services.Migrations
 
                     b.Navigation("UserTransaction");
 
-                    b.Navigation("Userpin");
+                    b.Navigation("Userpin")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

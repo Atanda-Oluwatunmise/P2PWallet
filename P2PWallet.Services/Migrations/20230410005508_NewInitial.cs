@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace P2PWallet.Services.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class NewInitial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -104,6 +104,26 @@ namespace P2PWallet.Services.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SecurityQuestions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserSecurityId = table.Column<int>(type: "int", nullable: false),
+                    Question = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Answer = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SecurityQuestions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SecurityQuestions_Users_UserSecurityId",
+                        column: x => x.UserSecurityId,
+                        principalTable: "Users",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Transactions",
                 columns: table => new
                 {
@@ -151,6 +171,11 @@ namespace P2PWallet.Services.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_SecurityQuestions_UserSecurityId",
+                table: "SecurityQuestions",
+                column: "UserSecurityId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_RecipientId",
                 table: "Transactions",
                 column: "RecipientId");
@@ -172,6 +197,9 @@ namespace P2PWallet.Services.Migrations
 
             migrationBuilder.DropTable(
                 name: "Pin");
+
+            migrationBuilder.DropTable(
+                name: "SecurityQuestions");
 
             migrationBuilder.DropTable(
                 name: "Transactions");

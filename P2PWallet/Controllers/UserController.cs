@@ -53,5 +53,34 @@ namespace P2PWallet.Api.Controllers
             var result = await _userServices.GetMyAccountNumber();
             return result;
         }
+
+        [HttpPut("editinfo"), Authorize]
+        public async Task<ServiceResponse<List<EditViewModel>>> EditUserInfo(EditViewModel request)
+        {
+            var result = await _userServices.EditUserInfo(request);
+            return result;
+        }
+
+        [HttpPost("uploadimage"), Authorize]
+        public async Task<ServiceResponse<string>> SaveImage([FromForm]ImageViewmodel imageview)
+        {
+            var result = await _userServices.SaveImage(imageview);
+            return result;
+        }
+
+        [HttpGet("displayimage"), Authorize]
+        public async Task<DisplayViewmodel> DisplayImage()
+        {
+            var result = await _userServices.DisplayImage();
+            return result;
+        }
+        [HttpDelete("deleteimage")]
+        public async Task<ServiceResponse<string>> DeleteImage()
+        {
+            var result = await _userServices.DeleteImage();
+            return result;
+        }
+
+
     }
 }

@@ -36,4 +36,8 @@
     <ProjectReference Include="..\P2PWallet.Services\P2PWallet.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\Images\" />
+  </ItemGroup>
+
 </Project>
