@@ -259,6 +259,7 @@ namespace P2PWallet.Services.Services
                     {
                         var data = new AccountDetails()
                         {
+                            Username = userAccount.User.Username,
                             FirstName = userAccount.User.FirstName,
                             LastName = userAccount.User.LastName,
                             AccountName = userAccount.User.FirstName + " " + userAccount.User.LastName,

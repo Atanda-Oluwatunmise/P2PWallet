@@ -80,6 +80,7 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class AccountDetails
     {
+        public string Username { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string AccountName { get; set; } = string.Empty;

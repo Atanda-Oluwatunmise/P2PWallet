@@ -187,6 +187,7 @@ namespace P2PWallet.Services.Services
                     $"<p>To reset your password <a href={url}>Click Here</a></p>" +
                     $"<p>Or paste {url} in your web browser</p>");
 
+
                 if (sendmail == true)
                 {
                     var resetdetails = new ResetPassword

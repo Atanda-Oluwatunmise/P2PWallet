@@ -2,6 +2,7 @@
 using System.Net.Mail;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
+using MimeKit;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
@@ -23,6 +24,7 @@ namespace P2PWallet.Services.Services
             try
             {
                 var mail = new MailMessage();
+                mail.IsBodyHtml = true;
                 mail.From = new MailAddress(_settings.From, _settings.DisplayName);
                 mail.To.Add(to);
                 mail.Subject = subject;
@@ -32,7 +34,9 @@ namespace P2PWallet.Services.Services
                 client.EnableSsl = _settings.UseSSL ? true : false;
                 client.Host = _settings.Host;
                 client.Port = _settings.Port;
-                await client.SendMailAsync(mail);
+                client.Credentials = new NetworkCredential(_settings.UserName, _settings.Password);
+                client.UseDefaultCredentials = false;
+                client.Send(mail);
                 return true;
             }
             catch (Exception)
