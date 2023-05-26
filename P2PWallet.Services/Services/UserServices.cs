@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
@@ -33,14 +34,16 @@ namespace P2PWallet.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMailService _mailService;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly ILogger<UserServices> _logger;
 
-        public UserServices(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment webHostEnvironment)
+        public UserServices(DataContext dataContext,ILogger<UserServices> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment webHostEnvironment)
         {
             _dataContext = dataContext;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _mailService = mailService;
             _webHostEnvironment = webHostEnvironment;
+            _logger = logger;
         }
 
 
@@ -218,6 +221,7 @@ namespace P2PWallet.Services.Services
                 if (!VerifyPasswordHash(loginreq.Password, user.PasswordKey, user.Password))
                 {
                     throw new Exception("Username/Password is Incorrect");
+
                 }
 
                 if (user.VerificationToken == null)
@@ -237,6 +241,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED....{ex.Message}");
             }
 
             return response;
@@ -270,6 +275,7 @@ namespace P2PWallet.Services.Services
                             Balance = userAccount.Balance
                         };
                         accountDetails.Add(data);
+
                     }
                     response.Data = accountDetails;
                 }
@@ -445,6 +451,24 @@ namespace P2PWallet.Services.Services
             }
 
             return imageview;
+        }
+
+        public async Task<bool> VerifyImageStatus()
+        {
+            try
+            {
+                if(_httpContextAccessor.HttpContext != null)
+                {
+                    var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var userImg = await _dataContext.ImageDetails.Where(x => x.ImageUserId == userId).FirstOrDefaultAsync();
+                    if (userImg != null) { return true; }
+                    else { return false; }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return true;
         }
 
         public async Task<ServiceResponse<string>> DeleteImage()

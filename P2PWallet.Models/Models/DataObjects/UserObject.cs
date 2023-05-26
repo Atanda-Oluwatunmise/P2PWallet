@@ -218,6 +218,15 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Answer { get; set; }
     }
 
+    public class SecurityQuestionValidator : AbstractValidator<SecurityQuestionDto>
+    {
+        public SecurityQuestionValidator()
+        {
+            RuleFor(x => x.Question).NotNull().NotEmpty().WithMessage("Enter your security question");
+            RuleFor(x => x.Answer).NotNull().NotEmpty().WithMessage("Enter your security answer");
+        }
+    }
+
     public class EditViewModel
     {
         public IFormFile ImageFile { get; set; }

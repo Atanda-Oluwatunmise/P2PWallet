@@ -81,6 +81,12 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpGet("verifyimagestatus"), Authorize]
+        public async Task<bool> VerifyImageStatus()
+        {
+            var result = await _userServices.VerifyImageStatus();
+            return result;
+        }
 
     }
 }

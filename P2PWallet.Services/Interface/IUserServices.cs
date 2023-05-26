@@ -25,6 +25,8 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<string>> SaveImage([FromBody] ImageViewmodel imageview);
         public Task<DisplayViewmodel> DisplayImage();
         public Task<ServiceResponse<string>> DeleteImage();
+        public Task<bool> VerifyImageStatus();
+
 
     }
 }

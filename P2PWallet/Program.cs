@@ -44,6 +44,7 @@ builder.Services.AddTransient<IValidator<ResetPasswordRequest>, ResetPasswordVal
 builder.Services.AddTransient<IValidator<ResetPinRequest>, ResetPinValidator>();
 builder.Services.AddTransient<IValidator<PinDto>, CreatePinValidator>();
 builder.Services.AddTransient<IValidator<EditViewModel>, EditDetailValidator>();
+builder.Services.AddTransient <IValidator<SecurityQuestionDto>, SecurityQuestionValidator>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

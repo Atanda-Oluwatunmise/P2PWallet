@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using NLog;
 using Org.BouncyCastle.Crypto.Macs;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.DataObjects.WebHook;
@@ -33,13 +35,16 @@ namespace P2PWallet.Services.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserServices _userServices;
         private readonly IMailService _mailService;
-        public AuthService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IUserServices userServices, IMailService mailService) 
+        private readonly ILogger<AuthService> _logger;
+
+        public AuthService(DataContext dataContext,ILogger<AuthService> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IUserServices userServices, IMailService mailService) 
         {
             _dataContext = dataContext;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _userServices = userServices;
             _mailService = mailService;
+            _logger = logger;
         }
 
         private void CreatePinHash(string pin, out byte[] pinKey, out byte[] pinHash)
@@ -88,6 +93,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError(ex.Message);
             }
             return response;
         }
@@ -107,7 +113,8 @@ namespace P2PWallet.Services.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("Cannot Verify Password");
+                _logger.LogError($"Cannot Verify Password...", ex.Message);
+                return false;
             }
         }
 
@@ -126,7 +133,7 @@ namespace P2PWallet.Services.Services
                     {
                         if (!VerifyPinHash(pin.UserPin, loggedInUser.PinKey, loggedInUser.UserPin))
                         {
-                            throw new Exception("Pin is Incorrect");
+                            throw new Exception($"Pin is Incorrect");
                         }
                         response.Data = "Pin is correct";
                     }
@@ -135,6 +142,8 @@ namespace P2PWallet.Services.Services
             catch (Exception ex) {
                 response.Status = false; 
                 response.Data = ex.Message;
+
+                _logger.LogError($"{response}....{ex.Message}");
             }
             return response;
         }
@@ -153,19 +162,26 @@ namespace P2PWallet.Services.Services
                     {
                         response.Data = "Never created a Pin";
                     }
+
+                    if (loggedinUser != null)
+                    {
+                        throw new Exception("User already has a pin");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED... {ex.Message}");
+
             }
             return response;
         }
 
         public async Task<ServiceResponse<string>> ForgotPassword(EmailDto emaill)
         {
-
+            
             var response = new ServiceResponse<string>();
             try
             {
@@ -213,6 +229,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED ...{ex.Message}");
             }
             return response;
         }
@@ -262,6 +279,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"An ERROR OCCURRED.... {ex.Message}");
             }
             return response;
         }
@@ -294,6 +312,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED....{ex.Message}");
             }
             return response;
         }
@@ -328,6 +347,7 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR JUST OCCURRED...{ex.Message}");
             }
             return response;
         }
@@ -338,14 +358,14 @@ namespace P2PWallet.Services.Services
             var response = new ServiceResponse<string>();
             try
             {
-                if (_httpContextAccessor.HttpContext!= null)
+                if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                     var loggedinUser = await _dataContext.Users.Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
 
                     if (loggedinUser != null)
                     {
-                        if(changepassword.CurrentPassword == changepassword.ConfirmPassword)
+                        if (changepassword.CurrentPassword == changepassword.ConfirmPassword)
                         {
                             throw new Exception("Cannot use old password");
                         }
@@ -380,10 +400,12 @@ namespace P2PWallet.Services.Services
                     response.Data = "Password successfully changed";
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+
+                _logger.LogError($"AN ERROR OCCURRED...{ex.Message}");
             }
             return response;
         }
@@ -440,6 +462,8 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED...{ex.Message}");
+
             }
             return response;
         }
@@ -476,6 +500,8 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED...{ex.Message}");
+
             }
             return response;
         }
@@ -505,6 +531,8 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED...{ex.Message}");
+
             }
             return response;
         }
