@@ -21,7 +21,10 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-
+using PdfSharpCore;
+using PdfSharpCore.Pdf;
+using TheArtOfDev.HtmlRenderer.PdfSharp;
+using PageSize = PdfSharpCore.PageSize;
 
 namespace P2PWallet.Services.Services
 {
@@ -507,6 +510,64 @@ namespace P2PWallet.Services.Services
                 response.StatusMessage = ex.Message;
             }
             return response;
+        }
+
+        public async Task<ActionResult> GeneratePdf(ControllerBase controller)
+        {
+            var document = new PdfDocument();
+            string htmlcontent = "<div style='width:100%;>";
+            htmlcontent += "<img style='height:60px' src='"  + "'   />";
+            htmlcontent += "<h2 style= 'display: flex'>Transactions History </h2>";
+            htmlcontent += "<h2>Welcome to Nihira Techiees</h2>";
+
+            htmlcontent += "<table style ='width:100%; border: 1px solid #000'>";
+            htmlcontent += "<thead style='font-weight:bold'>";
+            htmlcontent += "<tr>";
+            htmlcontent += "<td style='border:1px solid #000'> Product Code </td>";
+            htmlcontent += "<td style='border:1px solid #000'> Description </td>";
+            htmlcontent += "<td style='border:1px solid #000'>Qty</td>";
+            htmlcontent += "<td style='border:1px solid #000'>Price</td >";
+            htmlcontent += "<td style='border:1px solid #000'>Total</td>";
+            htmlcontent += "</tr>";
+            htmlcontent += "</thead >";
+
+
+            htmlcontent += "<tbody>";
+
+            htmlcontent += "</tbody>";
+
+            htmlcontent += "</table>";
+            htmlcontent += "</div>";
+
+            htmlcontent += "<div style='text-align:right'>";
+            htmlcontent += "<h1> Summary Info </h1>";
+            htmlcontent += "<table style='border:1px solid #000;float:right' >";
+            htmlcontent += "<tr>";
+            htmlcontent += "<td style='border:1px solid #000'> Summary Total </td>";
+            htmlcontent += "<td style='border:1px solid #000'> Summary Tax </td>";
+            htmlcontent += "<td style='border:1px solid #000'> Summary NetTotal </td>";
+            htmlcontent += "</tr>";
+
+            htmlcontent += "</table>";
+            htmlcontent += "</div>";
+
+            htmlcontent += "</div>";
+
+
+            //generate pdf content
+            PdfGenerator.AddPdfPages(document, htmlcontent, PageSize.A4);
+            byte[]? response = null;
+           
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                document.Save(ms);
+                response = ms.ToArray();
+            }   
+
+            string FileName = "Transaction Statement .pdf";
+
+            return controller.File(response, "application/pdf", FileName);
         }
     }
 }

@@ -74,7 +74,7 @@ namespace P2PWallet.Api.Controllers
             var result = await _userServices.DisplayImage();
             return result;
         }
-        [HttpDelete("deleteimage")]
+        [HttpDelete("deleteimage"), Authorize]
         public async Task<ServiceResponse<string>> DeleteImage()
         {
             var result = await _userServices.DeleteImage();
@@ -85,6 +85,13 @@ namespace P2PWallet.Api.Controllers
         public async Task<bool> VerifyImageStatus()
         {
             var result = await _userServices.VerifyImageStatus();
+            return result;
+        }
+
+        [HttpGet("generatepdf")]
+        public async Task<ActionResult> GeneratePdf()
+        {
+            var result = await _userServices.GeneratePdf(this);
             return result;
         }
 

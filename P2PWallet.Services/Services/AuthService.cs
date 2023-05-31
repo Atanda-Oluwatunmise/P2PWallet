@@ -422,24 +422,25 @@ namespace P2PWallet.Services.Services
 
                     if (loggedinUser != null)
                     {
-                        if(changepin.CurrentPin == changepin.ConfirmPin)
-                        {
-                            throw new Exception("Cannot use old pin");
-                        }
-                        
-
                         var userpin = VerifyPinHash(changepin.CurrentPin, verifypinuser.PinKey, verifypinuser.UserPin);
                         if (!userpin)
                         {
                             throw new Exception("Current Pin does not exist");
                         }
+
+                        if (changepin.CurrentPin == changepin.ConfirmPin)
+                        {
+                            throw new Exception("Cannot use old pin");
+                        }
+                       
+                     
                     }
                     var verifyquestion = await _dataContext.SecurityQuestions.Include("UserSecurity").Where(x => x.UserId == loggedinId).FirstOrDefaultAsync();
                  
                     
                     if(changepin.Answer != verifyquestion.Answer)
                     {
-                        throw new Exception("Answer does not match");
+                        throw new Exception("Security answer is incorrect!");
 
                     }
 
