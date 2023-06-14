@@ -1,4 +1,5 @@
-﻿using P2PWallet.Models.Models.DataObjects;
+﻿using Microsoft.AspNetCore.Mvc;
+using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace P2PWallet.Services.Interface
     {
         public Task<ServiceResponse<AccountViewModel>> Transfers(TransferDto transferdto);
         public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory();
-
+        public Task<ServiceResponse<List<TransactionsView>>> RecentTransactions();
+        public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(DateDto dateDto);
+        public Task<ActionResult> GenerateHistory(ControllerBase controller);
     }
 }

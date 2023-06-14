@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <!-- Set page size here: A5, A4 or A3 -->
+    <!-- Set also "landscape" if you need -->
+    <style>@page {
+        size: A4 portrait;
+        margin-top: 8px;
+        margin-bottom: 10px;
+        margin-left: 20px;
+    }</style>
+    <style>
+        /* Three image containers (use 25% for four, and 50% for two, etc) */
+        .column {
+            float: left;
+            padding: 5px;
+        }
+
+        /* Clear floats after image containers */
+        .row::after {
+            content: "";
+            clear: both;
+            display: table;
+        }
+
+        table tbody tr td {
+            padding: 2px !important;
+            line-height: 1.35 !important;
+        }
+
+        @media print {
+            .box-body {
+                margin-top: 10px !important;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+
+    <style>
+        .center-me {
+            font-size: 15px;
+            margin: auto;
+            height: 10px;
+            max-width: 500px;
+            margin: 75px auto 40px auto;
+            display: flex;
+        }
+    </style>
+</head>
+<!-- Set "A5", "A4" or "A3" for class name -->
+<!-- Set also "landscape" if you need -->
+<body class="A4 portrait">
+
+<!-- Each sheet element should have the class "sheet" -->
+<!-- "padding-**mm" is optional: you can set 10, 15, 20 or 25 -->
+<section class="sheet" id="content-print">
+
+    <div class="box-body" id="box_data" style="display: flex;padding: 5px 10px 0 10px;margin-bottom: -21px;">
+        <div style="width: 100%;padding-right: 10px;" class="col-md-12">
+            <div class="row">
+                <div class="col-lg-4" style="width: 70%;">
+                    <img style="width: 200px; height:auto; margin-bottom: 5px;" src="{imgurl}"></img>
+
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                    <table style="width:30%;">
+                        <tr class="" style="background: #53277E; color: #FFF;">
+                            <td style="font-size: 14px;"  class="db text-center" width="100px">
+                                Date
+                            </td>
+                            <td style="border-left: none;font-size: 14px;">
+                                REFERENCE NO
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 12px;">
+                                {StatementDate}
+                            </td>
+                            <td>{REFERENCENO}</td>
+                        </tr>
+                    </table>
+                    </div>
+                
+            </div>
+            <br>
+
+            <table width="100%" table-border="1">
+                <tr style="background: #53277E; color: #fff;">
+                    <th class="text-center" colspan="2" style="width: 25%; font-size: 20px;">Transactions Statement for {startdate} to {enddate}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Customer's Name</th>
+                    <th style="width: 5%;">{CustomerName}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Address</th>
+                    <th style="width: 5%;">{CustomerAddress}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Phone</th>
+                    <th style="width: 5%;">{CustomerPhone}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Email Address</th>
+                    <th style="width: 5%;">{CustomerEmail}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Currency</th>
+                    <th style="width: 5%;">{Currency}</th>
+                </tr>
+                <tr>
+                    <th style="width: 5%;font-size: 12px;background: #e0dcdc; color: #000;">Current Balance</th>
+                    <th style="width: 5%;">{CurrentBalance}</th>
+                </tr>
+            </table>
+            <br>
+            <table width="100%" style="border:1px">
+                <tr style="background: #53277E; color: #fff;">
+                    <th class="text-center">
+                        S/N
+                    </th>
+                    <th class="text-center">
+                        Transaction Date
+                    </th>
+                    <th class="text-center" colspan="3">
+                        Description
+                    </th>
+                    <th class="text-center">
+                        Debit
+                    </th>
+                    <th class="text-center">
+                        Credit
+                    </th>
+                </tr>
+                <tbody>
+                    {Transactions}
+                <!--<tr><td>{S/N}</td><td>{Date}</td><td colspan="3">{Description}</td><td>{Debit}</td><td>{Credit}</td></tr>-->
+                </tbody>
+                <tfoot>
+                <tr style="background: #53277E; color: #fff;">
+                    <td></td>
+                    <td></td>
+                    <td colspan="3"></td>
+                    <td>Total; {TotalDebit}</td>
+                    <td>Total; {TotalCredit}</td>
+                </tr>
+              
+                </tfoot>
+            </table>
+            <br>
+        </div>
+
+    </div>
+
+</section>
+</body>
+</html>

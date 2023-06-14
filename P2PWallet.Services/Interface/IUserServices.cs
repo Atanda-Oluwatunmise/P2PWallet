@@ -26,7 +26,8 @@ namespace P2PWallet.Services.Interface
         public Task<DisplayViewmodel> DisplayImage();
         public Task<ServiceResponse<string>> DeleteImage();
         public Task<bool> VerifyImageStatus();
-        public Task<ActionResult> GeneratePdf(ControllerBase controller);
+        public Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto);
+
 
 
 

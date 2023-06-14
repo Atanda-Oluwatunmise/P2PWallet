@@ -88,10 +88,12 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpGet("generatepdf")]
-        public async Task<ActionResult> GeneratePdf()
+    
+
+        [HttpPost("refreshtoken"), Authorize]
+        public async Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto)
         {
-            var result = await _userServices.GeneratePdf(this);
+            var result = await _userServices.Refresh(tokenApiDto);
             return result;
         }
 

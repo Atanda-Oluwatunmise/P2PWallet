@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
+using P2PWallet.Services.Services;
 
 namespace P2PWallet.Api.Controllers
 {
@@ -34,6 +35,27 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-       
+        [HttpGet("recenttransactions"), Authorize]
+        public async Task<ServiceResponse<List<TransactionsView>>> RecentTransactions()
+        {
+            var result = await _transactionService.RecentTransactions();
+            return result;
+        }
+
+        [HttpPost("usertransactionsbydate"), Authorize]
+        public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(DateDto dateDto)
+        {
+            var result = await _transactionService.UserTransactionsByDate(dateDto);
+            return result;
+        }
+
+        [HttpGet("generatepdf"), Authorize]
+        public async Task<ActionResult> GenerateHistory()
+        {
+            var result = await _transactionService.GenerateHistory(this);
+            return result;
+        }
+
+
     }
 }

@@ -30,6 +30,12 @@ using MailKit.Net.Smtp;
 using System.Net.Mail;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 using Org.BouncyCastle.Cms;
+using Microsoft.AspNetCore.Mvc;
+using PdfSharpCore.Pdf;
+using TheArtOfDev.HtmlRenderer.PdfSharp;
+using PdfSharpCore;
+using DinkToPdf.Contracts;
+using DinkToPdf;
 
 namespace P2PWallet.Services.Services
 {
@@ -41,14 +47,18 @@ namespace P2PWallet.Services.Services
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMailService _mailService;
+        private readonly IWebHostEnvironment _hostEnvironment;
+        private readonly IConverter _converter;
         static readonly HttpClient client = new HttpClient();
 
-        public TransactionService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService)
+        public TransactionService(DataContext dataContext, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment hostEnvironment, IConverter converter)
         {
             _dataContext = dataContext;
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _mailService = mailService;
+            _hostEnvironment = hostEnvironment;
+            _converter = converter;
         }
 
 
@@ -195,6 +205,144 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public async Task<List<TransactionsView>> TransactionsHistory()
+        {
+            List<TransactionsView> transactions = new List<TransactionsView>();
+
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                if (loggedUserId != null)
+                {
+                    var txns = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
+                        .Where(x => x.SenderId == loggedUserId).ToListAsync();
+
+                    foreach (var txn in txns)
+                    {
+                        var debitdata = new TransactionsView()
+                        {
+                            SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
+                            Currency = txn.Currency,
+                            TxnAmount = txn.Amount,
+                            TransType = "DEBIT",
+                            ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                            DateofTransaction = txn.DateofTransaction
+                        };
+                        transactions.Add(debitdata);
+                    }
+
+                    var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
+                        .Where(x => x.RecipientId == loggedUserId).ToListAsync();
+
+                    foreach (var txn in trxns)
+                    {
+                        if (txn.SenderId == null)
+                        {
+                            var creditdata = new TransactionsView()
+                            {
+                                SenderInfo = "PAYSTACK_FUNDING",
+                                Currency = txn.Currency,
+                                TxnAmount = txn.Amount,
+                                TransType = "CREDIT",
+                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                                DateofTransaction = txn.DateofTransaction
+                            };
+                            transactions.Add(creditdata);
+                        }
+                        if (txn.SenderId != null)
+                        {
+                            var creditdata = new TransactionsView()
+                            {
+                                SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
+                                Currency = txn.Currency,
+                                TxnAmount = txn.Amount,
+                                TransType = "CREDIT",
+                                ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
+                                DateofTransaction = txn.DateofTransaction
+                            };
+                            transactions.Add(creditdata);
+                        }
+                    }
+                }
+            }
+
+
+            return transactions;
+        }
+        public async Task<ServiceResponse<List<TransactionsView>>> RecentTransactions()
+        {
+            var response = new ServiceResponse<List<TransactionsView>>();
+
+            try
+            {
+                    var data = await TransactionsHistory();
+                    response.Data = data.OrderByDescending(x => x.DateofTransaction).Take(3).ToList();
+                
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
+
+        public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(DateDto dateDto)
+        {
+            DateTime fromDate = DateTime.Parse(dateDto.startDate);
+            DateTime toDate = DateTime.Parse(dateDto.endDate);
+            var response = new ServiceResponse<List<TransactionsView>>();
+            List<TransactionsView> newtransactions = new List<TransactionsView>();
+            List<TransactionsView> transactionsHolder = new List<TransactionsView>();
+
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    if (loggedUserId != null)
+                    {
+                        var data = await TransactionsHistory();
+
+
+                        if (toDate < fromDate)
+                        {
+                            throw new Exception("endDate must be greater than or equal to startDate");
+                        }
+
+                        if (fromDate <= toDate)
+                        {
+                            for (var day = fromDate.Date; day.Date <= toDate.Date; day = day.AddDays(1))
+                            {
+                                newtransactions = data.Where(x => x.DateofTransaction.Date == day.Date).ToList();
+                                if(newtransactions.Count != 0 && newtransactions != null)
+                                {
+                                    transactionsHolder.AddRange(newtransactions);
+                                }
+
+                            }
+                            if (transactionsHolder.Count == 0)
+                            {
+                                response.Data = null;
+                            }
+                            else
+                            {
+                                response.Data = transactionsHolder.OrderBy(x => x.DateofTransaction).ToList();
+                            }
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory()
         {
             var response = new ServiceResponse<List<TransactionsView>>();
@@ -204,61 +352,9 @@ namespace P2PWallet.Services.Services
             {
                 if (_httpContextAccessor.HttpContext != null)
                 {
-                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                        if (loggedUserId != null)
-                        {
-                            var txns = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
-                                .Where(x => x.SenderId == loggedUserId).ToListAsync();
-
-                            foreach (var txn in txns)
-                            {
-                                var debitdata = new TransactionsView()
-                                {
-                                    SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
-                                    Currency = txn.Currency,
-                                    TxnAmount = txn.Amount,
-                                    TransType = "DEBIT",
-                                    ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
-                                    DateofTransaction = txn.DateofTransaction
-                                };
-                                transactions.Add(debitdata);
-                            }
-
-                            var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
-                                .Where(x => x.RecipientId == loggedUserId).ToListAsync();
-
-                            foreach (var txn in trxns)
-                            {
-                                if (txn.SenderId == null)
-                                {
-                                    var creditdata = new TransactionsView()
-                                    {
-                                        SenderInfo = "PAYSTACK_FUNDING",
-                                        Currency = txn.Currency,
-                                        TxnAmount = txn.Amount,
-                                        TransType = "CREDIT",
-                                        ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
-                                        DateofTransaction = txn.DateofTransaction
-                                    };
-                                    transactions.Add(creditdata);
-                            }
-                                if (txn.SenderId != null)
-                                    {
-                                        var creditdata = new TransactionsView()
-                                        {
-                                            SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
-                                            Currency = txn.Currency,
-                                            TxnAmount = txn.Amount,
-                                            TransType = "CREDIT",
-                                            ReceiverInfo = txn.ReceiverUser.FirstName + " " + txn.ReceiverUser.LastName + " - " + txn.RecipientAccountNumber,
-                                            DateofTransaction = txn.DateofTransaction
-                                        };
-                                        transactions.Add(creditdata);
-                                    }
-                            }
-                        }
-                        response.Data = transactions.OrderByDescending(x => x.DateofTransaction).ToList();
-                    }
+                    var data = await TransactionsHistory();
+                    response.Data = data.OrderBy(x => x.DateofTransaction).ToList();
+                }
             }
             catch (Exception ex)
             {
@@ -266,6 +362,94 @@ namespace P2PWallet.Services.Services
                 response.StatusMessage = ex.Message;
             }
             return response;
+        }
+
+        public byte[] GeneratePdf(string htmlContent)
+        {
+            var globalSettings = new GlobalSettings
+            {
+                ColorMode = ColorMode.Color,
+                Orientation = Orientation.Portrait,
+                PaperSize = PaperKind.A4,
+                Margins = new MarginSettings { Top = 10, Bottom = 10, Left = 10, Right = 10 },
+                DocumentTitle = "Transactions History"
+            };
+
+            var objectSettings = new ObjectSettings
+            {
+                PagesCount = true,
+                HtmlContent = htmlContent,
+                Page = "",
+                WebSettings = { DefaultEncoding = "utf-8" },
+                HeaderSettings = { FontSize = 12, Right = "Page [page] of [toPage]", Line = true, Spacing = 2.812 },
+                FooterSettings = { FontSize = 12, Line = true, Right = "© " + DateTime.Now.Year }
+            };
+
+            var document = new HtmlToPdfDocument()
+            {
+                GlobalSettings = globalSettings,
+                Objects = {objectSettings}
+            };
+
+            return _converter.Convert(document);
+        }
+
+        public async Task<ActionResult> GenerateHistory(ControllerBase controller)
+        {
+
+            var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            var txns = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var date = DateTime.Now.ToShortDateString();
+            var url = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                   + "transactionImage" + Path.DirectorySeparatorChar.ToString() + "bankifyimg.png";
+            var PathToFile = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                   + "transactionStatementTemplate" + Path.DirectorySeparatorChar.ToString() + "transactionsTemp.html";
+            var data = await TransactionsHistory();
+
+            StringBuilder sb = new StringBuilder();
+            foreach (var txn in data)
+            {
+                sb.Append("<tr>");
+                sb.Append("<td>");
+                sb.Append("{S/N}");
+                sb.Append("</td>");
+                sb.Append("<td>");
+                sb.Append(txn.DateofTransaction);
+                sb.Append("</td>");
+                sb.Append("<td colspan='3'>");
+                sb.Append(txn.ReceiverInfo);
+                sb.Append("</td>");
+                sb.Append("<td>");
+                sb.Append("{Debit");
+                sb.Append("</td>");
+                sb.Append("<td>");
+                sb.Append("{Credit}");
+                sb.Append("</td>");
+            }
+
+            string htmlContent = "";
+
+            using (StreamReader streamreader = File.OpenText(PathToFile))
+            {
+                htmlContent = streamreader.ReadToEnd();
+                htmlContent = htmlContent.Replace("{StatementDate}", date);
+                htmlContent = htmlContent.Replace("{REFERENCENO}", date);
+                htmlContent = htmlContent.Replace("{imgurl}", url);
+                htmlContent = htmlContent.Replace("{CustomerName}", $"{txns.FirstName} {txns.LastName} ");
+                htmlContent = htmlContent.Replace("{CustomerAddress}", txns.Address);
+                htmlContent = htmlContent.Replace("{CustomerPhone}", txns.PhoneNumber);
+                htmlContent = htmlContent.Replace("{CustomerEmail}", txns.Email);
+                htmlContent = htmlContent.Replace("{Currency}", txns.UserAccount.Currency);
+                htmlContent = htmlContent.Replace("{CurrentBalance}", txns.UserAccount.Balance.ToString());
+                htmlContent = htmlContent.Replace("{Transactions}", sb.ToString());
+            }
+
+            byte[] pdfBytes = GeneratePdf(htmlContent);
+            return controller.File(pdfBytes, "application/pdf", "generated.pdf");
+
+
+            
         }
     }
 }

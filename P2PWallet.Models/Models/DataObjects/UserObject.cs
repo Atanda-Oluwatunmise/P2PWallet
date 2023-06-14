@@ -36,6 +36,12 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Password { get; set; } = string.Empty;
     }
 
+    public class TokenApiDto
+    {
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
+    }
+
     public class LoginDto
     {
         public string Username { get; set; } = string.Empty;
@@ -113,6 +119,7 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string Name { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
     }
 
     public class PinDto
@@ -306,6 +313,12 @@ namespace P2PWallet.Models.Models.DataObjects
     public class SecurityViewModel
     {
         public string Question { get; set; } = string.Empty;
+    }
+
+    public class DateDto
+    {
+        public string startDate { get; set; }
+        public string endDate { get; set; }
     }
 
 }

@@ -25,6 +25,7 @@ using PdfSharpCore;
 using PdfSharpCore.Pdf;
 using TheArtOfDev.HtmlRenderer.PdfSharp;
 using PageSize = PdfSharpCore.PageSize;
+using Microsoft.Extensions.Options;
 
 namespace P2PWallet.Services.Services
 {
@@ -201,13 +202,48 @@ namespace P2PWallet.Services.Services
             //generate token
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(60),
+                expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials
                 );
 
             //write the token
             var jwt = new JwtSecurityTokenHandler().WriteToken(token);
             return jwt;
+        }
+
+        private string CreateRefreshToken()
+        {
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var refreshToken = Convert.ToBase64String(tokenBytes);
+
+            var tokenInUser = _dataContext.Users.Any(x => x.RefreshToken == refreshToken);
+            if (tokenInUser)
+            {
+                return CreateRefreshToken();
+            }
+            return refreshToken;
+        }
+
+        private ClaimsPrincipal GetPrincipleFromExpiredToken(string token)
+        {
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(_configuration.GetSection("AppSettings:Token").Value)),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            SecurityToken securityToken;
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+            var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+            if(jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha512Signature, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new Exception("Invalid token");
+            }
+            return principal;
         }
 
         public async Task<ServiceResponse<LoginView>> Login(LoginDto loginreq)
@@ -231,12 +267,19 @@ namespace P2PWallet.Services.Services
                 {
                     throw new Exception("Email not Verified!");
                 }
+                user.UserToken = CreateJWT(user);
+                var newrefreshToken = CreateRefreshToken();
+                user.RefreshToken = newrefreshToken;
+                user.RefreshTokenExpiryTime = DateTime.Now.AddDays(5);
+                await _dataContext.SaveChangesAsync();
 
                 var logindata = new LoginView()
                 {
                     Name = loginreq.Username,
-                    Token = CreateJWT(user)
+                    Token = user.UserToken,
+                    RefreshToken = user.RefreshToken
                 };
+
                 response.Data = logindata;
 
             }
@@ -250,6 +293,38 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public async Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto)
+        {
+            var response = new ServiceResponse<TokenApiDto>();
+            if(tokenApiDto == null)
+            {
+                throw new Exception("Invalid Client Request");
+            }
+            string accessToken = tokenApiDto.AccessToken;
+            string refreshToken = tokenApiDto.RefreshToken;
+            var principal = GetPrincipleFromExpiredToken(accessToken);
+            var username = principal.Identity.Name;
+            var user = await _dataContext.Users.FirstOrDefaultAsync(x => x.Username == username);
+
+            if(user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+            {
+                throw new Exception("Invalid Request");
+            }
+            var newAccessToken = CreateJWT(user);
+            var newrefreshToken = CreateRefreshToken();
+
+            user.RefreshToken = newrefreshToken;
+            await _dataContext.SaveChangesAsync();
+
+            var tokenData = new TokenApiDto()
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newrefreshToken,
+            };
+
+            response.Data = tokenData;
+            return response;
+        }
 
         public async Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber()
         {
@@ -512,63 +587,7 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
-        public async Task<ActionResult> GeneratePdf(ControllerBase controller)
-        {
-            var document = new PdfDocument();
-            string htmlcontent = "<div style='width:100%;>";
-            htmlcontent += "<img style='height:60px' src='"  + "'   />";
-            htmlcontent += "<h2 style= 'display: flex'>Transactions History </h2>";
-            htmlcontent += "<h2>Welcome to Nihira Techiees</h2>";
-
-            htmlcontent += "<table style ='width:100%; border: 1px solid #000'>";
-            htmlcontent += "<thead style='font-weight:bold'>";
-            htmlcontent += "<tr>";
-            htmlcontent += "<td style='border:1px solid #000'> Product Code </td>";
-            htmlcontent += "<td style='border:1px solid #000'> Description </td>";
-            htmlcontent += "<td style='border:1px solid #000'>Qty</td>";
-            htmlcontent += "<td style='border:1px solid #000'>Price</td >";
-            htmlcontent += "<td style='border:1px solid #000'>Total</td>";
-            htmlcontent += "</tr>";
-            htmlcontent += "</thead >";
-
-
-            htmlcontent += "<tbody>";
-
-            htmlcontent += "</tbody>";
-
-            htmlcontent += "</table>";
-            htmlcontent += "</div>";
-
-            htmlcontent += "<div style='text-align:right'>";
-            htmlcontent += "<h1> Summary Info </h1>";
-            htmlcontent += "<table style='border:1px solid #000;float:right' >";
-            htmlcontent += "<tr>";
-            htmlcontent += "<td style='border:1px solid #000'> Summary Total </td>";
-            htmlcontent += "<td style='border:1px solid #000'> Summary Tax </td>";
-            htmlcontent += "<td style='border:1px solid #000'> Summary NetTotal </td>";
-            htmlcontent += "</tr>";
-
-            htmlcontent += "</table>";
-            htmlcontent += "</div>";
-
-            htmlcontent += "</div>";
-
-
-            //generate pdf content
-            PdfGenerator.AddPdfPages(document, htmlcontent, PageSize.A4);
-            byte[]? response = null;
-           
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                document.Save(ms);
-                response = ms.ToArray();
-            }   
-
-            string FileName = "Transaction Statement .pdf";
-
-            return controller.File(response, "application/pdf", FileName);
-        }
+       
     }
 }
 

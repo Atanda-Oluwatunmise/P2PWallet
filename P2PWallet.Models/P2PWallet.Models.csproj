@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="DinkToPdf" Version="1.0.8" />
+	  <PackageReference Include="DinkToPdfCopy" Version="1.0.0" />
+	  <PackageReference Include="DinkToPdfIncludesDependencies" Version="1.0.8" />
 	  <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
 	  <PackageReference Include="MailKit" Version="3.6.0" />
 	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />

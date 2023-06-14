@@ -36,6 +36,9 @@ namespace P2PWallet.Models.Models.Entities
         public byte[]? Password { get; set; } = new byte[32];
         public byte[]? PasswordKey { get; set; } = new byte[32];
         public string? VerificationToken { get; set; } = string.Empty;
+        public string? UserToken { get; set; } = string.Empty;
+        public string? RefreshToken { get; set; } = string.Empty;
+        public DateTime? RefreshTokenExpiryTime { get; set; }
         public DateTime? UserVerifiedAt { get; set; }
 
 
