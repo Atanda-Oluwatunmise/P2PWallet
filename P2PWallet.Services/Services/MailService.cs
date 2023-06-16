@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using P2PWallet.Models.Models.DataObjects;
@@ -19,7 +20,7 @@ namespace P2PWallet.Services.Services
             _hostEnvironment = hostEnvironment;
         }
 
-        private async Task<bool> SendMail(string to, string subject, string body)
+        private async Task<bool> SendMail(string to, string subject, string body, IFormFile? file)
         {
             try
             {
@@ -29,6 +30,11 @@ namespace P2PWallet.Services.Services
                 mail.To.Add(to);
                 mail.Subject = subject;
                 mail.Body = body;
+
+                if (file != null)
+                {
+                    mail.Attachments.Add(new Attachment(file.OpenReadStream(), file.FileName));
+                }
 
                 var client = new SmtpClient();
                 client.EnableSsl = _settings.UseSSL ? true : false;
@@ -71,7 +77,7 @@ namespace P2PWallet.Services.Services
                     HtmlBody = HtmlBody.Replace("{balance}", balance);
 
                 }
-                await SendMail(emailAdd, subject, HtmlBody); 
+                await SendMail(emailAdd, subject, HtmlBody, null); 
 
                 return true;
             }
@@ -86,8 +92,21 @@ namespace P2PWallet.Services.Services
             try
             {
                 string HtmlBody = emailbody + emailbodyy;
-                await SendMail(email, subjectBody, HtmlBody);
+                await SendMail(email, subjectBody, HtmlBody, null);
              
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> SendStatementToEmail(string email, string subjectBody, string emailBody, IFormFile formFile, CancellationToken ct = default)
+        {
+            try
+            {
+                await SendMail(email, subjectBody, emailBody, formFile);
                 return true;
             }
             catch (Exception ex)

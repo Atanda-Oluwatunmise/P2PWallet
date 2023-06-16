@@ -321,4 +321,11 @@ namespace P2PWallet.Models.Models.DataObjects
         public string endDate { get; set; }
     }
 
+    public class TransactionHistoryDto
+    {
+        public string fromDate { get; set; }
+        public string toDate { get; set; }
+        public string txnType { get; set; }
+    }   
+
 }

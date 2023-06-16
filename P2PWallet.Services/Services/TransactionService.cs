@@ -36,6 +36,7 @@ using TheArtOfDev.HtmlRenderer.PdfSharp;
 using PdfSharpCore;
 using DinkToPdf.Contracts;
 using DinkToPdf;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace P2PWallet.Services.Services
 {
@@ -394,62 +395,370 @@ namespace P2PWallet.Services.Services
             return _converter.Convert(document);
         }
 
-        public async Task<ActionResult> GenerateHistory(ControllerBase controller)
+        public async Task<List<TransactionsView>> TransactionHistoryForPdf()
         {
-
+            List<TransactionsView> transactions = new List<TransactionsView>();
             var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
+            if (loggedUserId != null)
+            {
+                var txnss = await _dataContext.Transactions.Include("ReceiverUser").Include("SenderUser")
+                    .Where(x => x.SenderId == loggedUserId).ToListAsync();
+
+                foreach (var txn in txnss)
+                {
+                    var debitdata = new TransactionsView()
+                    {
+                        SenderInfo = txn.SenderUser.FirstName + " " + txn.SenderUser.LastName + " - " + txn.SenderAccountNumber,
+                        Currency = txn.Currency,
+                        TxnAmount = txn.Amount,
+                        TransType = "DEBIT",
+                        ReceiverInfo = $"SentTo//{txn.ReceiverUser.FirstName} {txn.ReceiverUser.LastName}|{txn.RecipientAccountNumber}",
+                        DateofTransaction = txn.DateofTransaction
+                    };
+                    transactions.Add(debitdata);
+                }
+
+                var trxns = await _dataContext.Transactions.Include("SenderUser").Include("ReceiverUser")
+                    .Where(x => x.RecipientId == loggedUserId).ToListAsync();
+
+                foreach (var txn in trxns)
+                {
+                    if (txn.SenderId == null)
+                    {
+                        var creditdata = new TransactionsView()
+                        {
+                            SenderInfo = "PAYSTACK_FUNDING",
+                            Currency = txn.Currency,
+                            TxnAmount = txn.Amount,
+                            TransType = "CREDIT",
+                            ReceiverInfo = $"{txn.ReceiverUser.FirstName} {txn.ReceiverUser.LastName} {txn.RecipientAccountNumber}",
+                            DateofTransaction = txn.DateofTransaction
+                        };
+                        transactions.Add(creditdata);
+                    }
+                    if (txn.SenderId != null)
+                    {
+                        var creditdata = new TransactionsView()
+                        {
+                            SenderInfo = $"SentFrom//{txn.SenderUser.FirstName} {txn.SenderUser.LastName}|{txn.SenderAccountNumber}",
+                            Currency = txn.Currency,
+                            TxnAmount = txn.Amount,
+                            TransType = "CREDIT",
+                            ReceiverInfo = $"{txn.ReceiverUser.FirstName} {txn.ReceiverUser.LastName} {txn.RecipientAccountNumber}",
+                            DateofTransaction = txn.DateofTransaction
+                        };
+                        transactions.Add(creditdata);
+                    }
+                }
+            }
+            return transactions;
+        }
+
+        public async Task<ActionResult> GenerateHistory(ControllerBase controller, TransactionHistoryDto trasactionDto)
+        {
+            DateTime startdate = DateTime.Parse(trasactionDto.fromDate);
+            DateTime enddate = DateTime.Parse(trasactionDto.toDate);
+            List<TransactionsView> newtransactions = new List<TransactionsView>();
+            List<TransactionsView> transactionsHolder = new List<TransactionsView>();
+            List<TransactionsView> holder = new List<TransactionsView>();
+
+            var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
             var txns = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var userFullName = $"{txns.FirstName} {txns.LastName} ";
             var date = DateTime.Now.ToShortDateString();
             var url = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
                    + "transactionImage" + Path.DirectorySeparatorChar.ToString() + "bankifyimg.png";
             var PathToFile = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
                    + "transactionStatementTemplate" + Path.DirectorySeparatorChar.ToString() + "transactionsTemp.html";
-            var data = await TransactionsHistory();
+            int sn = 1;
 
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var stringChars = new char[12];
+            var random = new Random();
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            var finalString = new string(stringChars);
+            var transactions = await TransactionHistoryForPdf();
+
+            if (enddate < startdate)
+                {
+                    throw new Exception("endDate must be greater than or equal to startDate");
+                }
+
+            if (startdate <= enddate)
+            {
+                for (var day = startdate.Date; day.Date <= enddate.Date; day = day.AddDays(1))
+                {
+                    newtransactions = transactions.Where(x => x.DateofTransaction.Date == day.Date).ToList();
+                    if (newtransactions.Count != 0 && newtransactions != null)
+                    {
+                        transactionsHolder.AddRange(newtransactions);
+                    }
+                }
+            }
+
+            if(trasactionDto.txnType.ToLower() == "credit")
+            {
+                holder.AddRange(transactionsHolder.Where(x => x.TransType == "CREDIT"));
+            }
+
+            else if (trasactionDto.txnType.ToLower() == "debit")
+            {
+                holder.AddRange(transactionsHolder.Where(x => x.TransType == "DEBIT"));
+            }
+
+            else
+            {
+                holder.AddRange(transactionsHolder);
+            }
+
+            transactionsHolder = holder.OrderBy(x => x.DateofTransaction).ToList();
+            double creditAmount = 0;
+            double debitAmount = 0;
             StringBuilder sb = new StringBuilder();
-            foreach (var txn in data)
+            foreach (var txn in transactionsHolder)
             {
                 sb.Append("<tr>");
                 sb.Append("<td>");
-                sb.Append("{S/N}");
+                sb.Append(sn++.ToString());
                 sb.Append("</td>");
                 sb.Append("<td>");
-                sb.Append(txn.DateofTransaction);
+                sb.Append(txn.DateofTransaction.Date.ToString("dd-MM-yyyy"));
                 sb.Append("</td>");
                 sb.Append("<td colspan='3'>");
-                sb.Append(txn.ReceiverInfo);
-                sb.Append("</td>");
-                sb.Append("<td>");
-                sb.Append("{Debit");
-                sb.Append("</td>");
-                sb.Append("<td>");
-                sb.Append("{Credit}");
+                if (txn.SenderInfo.Contains(userFullName) && txn.TransType == "DEBIT")
+                {
+                    sb.Append(txn.ReceiverInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    debitAmount += txn.TxnAmount;
+                }
+                else if (txn.ReceiverInfo.Contains(userFullName) && txn.TransType == "CREDIT")
+                {
+                    sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    creditAmount += txn.TxnAmount;
+                }
+                else
+                {
+                    sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    creditAmount += txn.TxnAmount;
+                }
                 sb.Append("</td>");
             }
 
             string htmlContent = "";
-
             using (StreamReader streamreader = File.OpenText(PathToFile))
             {
                 htmlContent = streamreader.ReadToEnd();
                 htmlContent = htmlContent.Replace("{StatementDate}", date);
-                htmlContent = htmlContent.Replace("{REFERENCENO}", date);
+                htmlContent = htmlContent.Replace("{REFERENCENO}", finalString.ToLower());
                 htmlContent = htmlContent.Replace("{imgurl}", url);
-                htmlContent = htmlContent.Replace("{CustomerName}", $"{txns.FirstName} {txns.LastName} ");
+                htmlContent = htmlContent.Replace("{CustomerName}", $"{txns.FirstName} {txns.LastName}");
                 htmlContent = htmlContent.Replace("{CustomerAddress}", txns.Address);
                 htmlContent = htmlContent.Replace("{CustomerPhone}", txns.PhoneNumber);
                 htmlContent = htmlContent.Replace("{CustomerEmail}", txns.Email);
                 htmlContent = htmlContent.Replace("{Currency}", txns.UserAccount.Currency);
                 htmlContent = htmlContent.Replace("{CurrentBalance}", txns.UserAccount.Balance.ToString());
+                htmlContent = htmlContent.Replace("{startdate}", startdate.Date.ToString());
+                htmlContent = htmlContent.Replace("{enddate}", enddate.Date.ToString());
                 htmlContent = htmlContent.Replace("{Transactions}", sb.ToString());
+                htmlContent = htmlContent.Replace("{TotalDebit}", debitAmount.ToString());
+                htmlContent = htmlContent.Replace("{TotalCredit}", creditAmount.ToString());
             }
 
             byte[] pdfBytes = GeneratePdf(htmlContent);
             return controller.File(pdfBytes, "application/pdf", "generated.pdf");
 
+        }
+        public async Task<ActionResult> GenerateHistoryForEmail (ControllerBase controller, DateDto trasactionDto)
+        {
+            DateTime startdate = DateTime.Parse(trasactionDto.startDate);
+            DateTime enddate = DateTime.Parse(trasactionDto.endDate);
+            List<TransactionsView> newtransactions = new List<TransactionsView>();
+            List<TransactionsView> transactionsHolder = new List<TransactionsView>();
+            List<TransactionsView> holder = new List<TransactionsView>();
 
-            
+            var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var txns = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var userFullName = $"{txns.FirstName} {txns.LastName} ";
+            var date = DateTime.Now.ToShortDateString();
+            var url = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                   + "transactionImage" + Path.DirectorySeparatorChar.ToString() + "bankifyimg.png";
+            var PathToFile = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
+                   + "transactionStatementTemplate" + Path.DirectorySeparatorChar.ToString() + "transactionsTemp.html";
+            int sn = 1;
+
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var stringChars = new char[12];
+            var random = new Random();
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            var finalString = new string(stringChars);
+            var transactions = await TransactionHistoryForPdf();
+
+            if (enddate < startdate)
+                {
+                    throw new Exception("endDate must be greater than or equal to startDate");
+                }
+
+            if (startdate <= enddate)
+            {
+                for (var day = startdate.Date; day.Date <= enddate.Date; day = day.AddDays(1))
+                {
+                    newtransactions = transactions.Where(x => x.DateofTransaction.Date == day.Date).ToList();
+                    if (newtransactions.Count != 0 && newtransactions != null)
+                    {
+                        transactionsHolder.AddRange(newtransactions);
+                    }
+                }
+            }
+
+           
+
+            transactionsHolder = transactionsHolder.OrderBy(x => x.DateofTransaction).ToList();
+            double creditAmount = 0;
+            double debitAmount = 0;
+            StringBuilder sb = new StringBuilder();
+            foreach (var txn in transactionsHolder)
+            {
+                sb.Append("<tr>");
+                sb.Append("<td>");
+                sb.Append(sn++.ToString());
+                sb.Append("</td>");
+                sb.Append("<td>");
+                sb.Append(txn.DateofTransaction.Date.ToString("dd-MM-yyyy"));
+                sb.Append("</td>");
+                sb.Append("<td colspan='3'>");
+                if (txn.SenderInfo.Contains(userFullName) && txn.TransType == "DEBIT")
+                {
+                    sb.Append(txn.ReceiverInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    debitAmount += txn.TxnAmount;
+                }
+                else if (txn.ReceiverInfo.Contains(userFullName) && txn.TransType == "CREDIT")
+                {
+                    sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    creditAmount += txn.TxnAmount;
+                }
+                else
+                {
+                    sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append("-");
+                    sb.Append("</td>");
+                    sb.Append("<td>");
+                    sb.Append(txn.TxnAmount);
+                    creditAmount += txn.TxnAmount;
+                }
+                sb.Append("</td>");
+            }
+
+            string htmlContent = "";
+            using (StreamReader streamreader = File.OpenText(PathToFile))
+            {
+                htmlContent = streamreader.ReadToEnd();
+                htmlContent = htmlContent.Replace("{StatementDate}", date);
+                htmlContent = htmlContent.Replace("{REFERENCENO}", finalString.ToLower());
+                htmlContent = htmlContent.Replace("{imgurl}", url);
+                htmlContent = htmlContent.Replace("{CustomerName}", $"{txns.FirstName} {txns.LastName}");
+                htmlContent = htmlContent.Replace("{CustomerAddress}", txns.Address);
+                htmlContent = htmlContent.Replace("{CustomerPhone}", txns.PhoneNumber);
+                htmlContent = htmlContent.Replace("{CustomerEmail}", txns.Email);
+                htmlContent = htmlContent.Replace("{Currency}", txns.UserAccount.Currency);
+                htmlContent = htmlContent.Replace("{CurrentBalance}", txns.UserAccount.Balance.ToString());
+                htmlContent = htmlContent.Replace("{startdate}", startdate.Date.ToString());
+                htmlContent = htmlContent.Replace("{enddate}", enddate.Date.ToString());
+                htmlContent = htmlContent.Replace("{Transactions}", sb.ToString());
+                htmlContent = htmlContent.Replace("{TotalDebit}", debitAmount.ToString());
+                htmlContent = htmlContent.Replace("{TotalCredit}", creditAmount.ToString());
+            }
+
+            byte[] pdfBytes = GeneratePdf(htmlContent);
+            return controller.File(pdfBytes, "application/pdf", "generated.pdf");
+
+        }
+
+        public async Task<ServiceResponse<string>> SendHistoryToEmail(ControllerBase controller, DateDto dateDto)
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                DateTime fromdate = DateTime.Parse(dateDto.startDate);
+                DateTime todate = DateTime.Parse(dateDto.endDate);
+                var frmdate = fromdate.Date.ToString("dd-MMM-yyyy");
+                var tdate = todate.Date.ToString("dd-MMM-yyyy");
+                IFormFile fileToAttach = (IFormFile)await GenerateHistoryForEmail(controller, dateDto);
+
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedInUser = await _dataContext.Users.Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+                    if (loggedInUser != null)
+                    {
+                        string subject = "P2PWALLET TRANSACTIONS STATEMENT";
+                        string MailBody = "<!DOCKTYPE html>" +
+                                                "<html>" +
+                                                    "<body>" +
+                                                    $"<h3>Dear {loggedInUser.FirstName}</h3>" +
+                                                    $"<h3>Find attached your statement as requested from {frmdate} to {tdate}</h3>" +
+                                                    "</body>" +
+                                                "</html>";
+
+                        var sendmail = await _mailService.SendStatementToEmail(loggedInUser.Email, subject, MailBody, fileToAttach);
+                        if( sendmail != false)
+                        {
+                            response.Data = "Successful";
+                        }
+                        else
+                        {
+                            throw new Exception("Mail Service failed");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
         }
     }
 }

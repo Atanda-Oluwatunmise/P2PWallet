@@ -81,21 +81,21 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpGet("verifyimagestatus"), Authorize]
-        public async Task<bool> VerifyImageStatus()
-        {
-            var result = await _userServices.VerifyImageStatus();
-            return result;
-        }
+        //[HttpGet("verifyimagestatus"), Authorize]
+        //public async Task<bool> VerifyImageStatus()
+        //{
+        //    var result = await _userServices.VerifyImageStatus();
+        //    return result;
+        //}
 
     
 
-        [HttpPost("refreshtoken"), Authorize]
-        public async Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto)
-        {
-            var result = await _userServices.Refresh(tokenApiDto);
-            return result;
-        }
+        //[HttpPost("refreshtoken"), Authorize]
+        //public async Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto)
+        //{
+        //    var result = await _userServices.Refresh(tokenApiDto);
+        //    return result;
+        //}
 
     }
 }

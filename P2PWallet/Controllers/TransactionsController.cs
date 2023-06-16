@@ -49,13 +49,18 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpGet("generatepdf"), Authorize]
-        public async Task<ActionResult> GenerateHistory()
+        [HttpPost("generatepdf"), Authorize]
+        public async Task<ActionResult> GenerateHistory(TransactionHistoryDto trasactionDto)
         {
-            var result = await _transactionService.GenerateHistory(this);
+            var result = await _transactionService.GenerateHistory(this, trasactionDto);
             return result;
         }
 
-
+        [HttpPost("generateemailpdf"), Authorize]
+        public async Task<ServiceResponse<string>> SendHistoryToEmail(DateDto dateDto)
+        {
+            var result = await _transactionService.SendHistoryToEmail(this, dateDto);
+            return result;
+        }
     }
 }

@@ -15,6 +15,9 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsHistory();
         public Task<ServiceResponse<List<TransactionsView>>> RecentTransactions();
         public Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(DateDto dateDto);
-        public Task<ActionResult> GenerateHistory(ControllerBase controller);
+        public Task<ActionResult> GenerateHistory(ControllerBase controller, TransactionHistoryDto trasactionDto);
+        // public Task<ActionResult> GenerateHistoryForEmail(ControllerBase controller, DateDto trasactionDto);
+        public Task<ServiceResponse<string>> SendHistoryToEmail(ControllerBase controller, DateDto dateDto);
+
     }
 }
