@@ -16,7 +16,7 @@ namespace P2PWallet.Models.Models.Entities
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public string TxnRef { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public string? Channel { get; set; } = string.Empty;

@@ -151,10 +151,8 @@ namespace P2PWallet.Services.Services
                         };
                         await _dataContext.Accounts.AddAsync(newaccount);
                         await _dataContext.SaveChangesAsync();
-
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -189,7 +187,7 @@ namespace P2PWallet.Services.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim("AccountNumber", user.UserAccount.AccountNumber),
+                //new Claim("AccountNumber", user.UserAccount.AccountNumber),
                 new Claim(ClaimTypes.Role, "Admin")
             };
             // defining a symmetric security key that creates the web token
@@ -373,24 +371,24 @@ namespace P2PWallet.Services.Services
             List<SearchAccountDetails> userDetails = new List<SearchAccountDetails>();
             try
             {
-                var searchUser = await _dataContext.Users.FirstOrDefaultAsync(x => x.UserAccount.AccountNumber == userSearch.AccountSearch
-                                                                                   || x.Username == userSearch.AccountSearch
-                                                                                   || x.Email == userSearch.AccountSearch);
+                var searchUser = await _dataContext.Accounts.Include("User").FirstOrDefaultAsync(x => x.AccountNumber == userSearch.AccountSearch
+                                                                                   || x.User.Username == userSearch.AccountSearch
+                                                                                   || x.User.Email == userSearch.AccountSearch);
 
                 if (searchUser == null)
                 {
                     throw new Exception("Account does not exist");
                 }
-                var userId = await _dataContext.Users.Include("UserAccount")
-                            .Where(x => x.UserAccount.UserId == searchUser.Id)
+                var userId = await _dataContext.Accounts.Include("User")
+                            .Where(x => x.UserId == searchUser.Id)
                             .FirstOrDefaultAsync();
 
                 if (userId != null)
                 {
                     var data = new SearchAccountDetails()
                     {
-                        AccountName = userId.FirstName + " " + userId.LastName,
-                        AccountNumber = userId.UserAccount.AccountNumber
+                        AccountName = userId.User.FirstName + " " + userId.User.LastName,
+                        AccountNumber = userId.AccountNumber
                     };
                     userDetails.Add(data);
                 }

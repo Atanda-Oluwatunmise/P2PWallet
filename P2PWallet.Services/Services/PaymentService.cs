@@ -73,6 +73,7 @@ namespace P2PWallet.Services.Services
                 {
                     var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                     var userAccount = await _dataContext.Users.Include("UserAccount").Include("UserDeposit").Where(x => x.Id == userId).FirstOrDefaultAsync();
+                    var accountdetails = await _dataContext.Accounts.Include("User").Where(x => x.UserId == userId).FirstOrDefaultAsync();
 
                     if (userAccount != null)
                     {
@@ -83,7 +84,7 @@ namespace P2PWallet.Services.Services
                         var data = new PaystackRequestDto
                         {
                             email = userAccount.Email,
-                            currency = userAccount.UserAccount.Currency,
+                            currency = accountdetails.Currency,
                             amount = Convert.ToInt32(deposit.Amount * 100),
                             reference = ReferenceGenerator().ToString()
                         };
@@ -149,6 +150,7 @@ namespace P2PWallet.Services.Services
             {
                 var paymentinfo = await _dataContext.Deposit.Where(x => x.TxnRef == eventData.data.reference).FirstOrDefaultAsync();
                 var payerAccount = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == paymentinfo.UserId).FirstOrDefaultAsync();
+                var userAccount = await _dataContext.Accounts.Include("User").Where(x => x.UserId == paymentinfo.UserId).FirstOrDefaultAsync();
 
                 if (payerAccount == null)
                 {
@@ -175,7 +177,7 @@ namespace P2PWallet.Services.Services
                 paymentinfo.CustomerCode = eventData.data.customer.customer_code;
                 paymentinfo.CreatedAt = DateTime.Now;
 
-                payerAccount.UserAccount.Balance = payerAccount.UserAccount.Balance + paymentinfo.Amount;
+                userAccount.Balance = userAccount.Balance + paymentinfo.Amount;
 
                 await _dataContext.SaveChangesAsync();
 
@@ -183,7 +185,7 @@ namespace P2PWallet.Services.Services
                 var txnDeposit = new Transaction()
                 {
                     RecipientId = payerAccount.Id,
-                    RecipientAccountNumber = payerAccount.UserAccount.AccountNumber,
+                    RecipientAccountNumber = userAccount.AccountNumber,
                     Reference = eventData.data.reference,
                     Amount = paymentinfo.Amount,
                     Currency = paymentinfo.Currency,
@@ -193,7 +195,7 @@ namespace P2PWallet.Services.Services
                 var deposit_mail = payerAccount.Email;
                 var deposit_Name = payerAccount.Username;
                 var deposit_Amount = txnDeposit.Amount;
-                var deposit_Balance = payerAccount.UserAccount.Balance;
+                var deposit_Balance = userAccount.Balance;
                 var DepositInfo = "was deposited to";
                 var Deptrantype = "Deposit";
                 var Depositdetails = payerAccount.FirstName + " " + payerAccount.LastName;

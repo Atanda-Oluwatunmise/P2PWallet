@@ -20,7 +20,7 @@ namespace P2PWallet.Models.Models.Entities
         public string? SenderAccountNumber { get; set; } = string.Empty;
         public string? RecipientAccountNumber { get; set;} = string.Empty;
         public string Reference { get;set; } = string.Empty;
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
         public string Currency { get; set; } = string.Empty;
         public DateTime DateofTransaction { get; set; } = DateTime.Now;
 

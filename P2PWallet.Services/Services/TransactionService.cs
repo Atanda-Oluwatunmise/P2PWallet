@@ -8,6 +8,7 @@ using HttpClient = System.Net.Http.HttpClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -37,6 +38,13 @@ using PdfSharpCore;
 using DinkToPdf.Contracts;
 using DinkToPdf;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.IO;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using Aspose.Pdf;
+using Aspose.Cells;
+using Azure;
+using Org.BouncyCastle.Utilities;
 
 namespace P2PWallet.Services.Services
 {
@@ -92,9 +100,9 @@ namespace P2PWallet.Services.Services
             var response = new ServiceResponse<AccountViewModel>();
             try
             {
-                var recieverUser = await _dataContext.Users.FirstOrDefaultAsync(x => x.UserAccount.AccountNumber == transferdto.AccountSearch 
-                                                                            || x.Username == transferdto.AccountSearch
-                                                                            || x.Email == transferdto.AccountSearch);
+                var recieverUser = await _dataContext.Accounts.Include("User").Where(x => x.AccountNumber == transferdto.AccountSearch 
+                                                                            || x.User.Username == transferdto.AccountSearch
+                                                                            || x.User.Email == transferdto.AccountSearch).FirstOrDefaultAsync();
 
                 if (recieverUser == null)
                 {
@@ -109,7 +117,7 @@ namespace P2PWallet.Services.Services
                     Balance = receiverAcc.Balance
                 };
 
-                double amount = transferdto.Amount;
+                decimal amount = transferdto.Amount;
 
                 var senderaccount = _httpContextAccessor.HttpContext.User.FindFirstValue("AccountNumber");
                 var userAccountNumber = _dataContext.Accounts.Include("User").Where(x => x.AccountNumber == senderaccount).FirstOrDefault();
@@ -147,8 +155,8 @@ namespace P2PWallet.Services.Services
                 _dataContext.Accounts.Update(userAccountNumber);
                 await _dataContext.SaveChangesAsync();
 
-                double receipientamount = receipientaccount.Balance + amount;
-                double newBalance = receipientamount;
+                decimal receipientamount = receipientaccount.Balance + amount;
+                decimal newBalance = receipientamount;
                 var receiverAccount = _dataContext.Accounts.Include("User").Where(x => x.AccountNumber == receipientaccount.AccountNumber).FirstOrDefault();
                 receiverAccount.AccountNumber = receipientaccount.AccountNumber;
                 receiverAccount.Balance = newBalance;
@@ -413,7 +421,7 @@ namespace P2PWallet.Services.Services
                         Currency = txn.Currency,
                         TxnAmount = txn.Amount,
                         TransType = "DEBIT",
-                        ReceiverInfo = $"SentTo//{txn.ReceiverUser.FirstName} {txn.ReceiverUser.LastName}|{txn.RecipientAccountNumber}",
+                        ReceiverInfo = $"{txn.ReceiverUser.FirstName} {txn.ReceiverUser.LastName}|{txn.RecipientAccountNumber}",
                         DateofTransaction = txn.DateofTransaction
                     };
                     transactions.Add(debitdata);
@@ -441,7 +449,7 @@ namespace P2PWallet.Services.Services
                     {
                         var creditdata = new TransactionsView()
                         {
-                            SenderInfo = $"SentFrom//{txn.SenderUser.FirstName} {txn.SenderUser.LastName}|{txn.SenderAccountNumber}",
+                            SenderInfo = $"{txn.SenderUser.FirstName} {txn.SenderUser.LastName}|{txn.SenderAccountNumber}",
                             Currency = txn.Currency,
                             TxnAmount = txn.Amount,
                             TransType = "CREDIT",
@@ -464,7 +472,8 @@ namespace P2PWallet.Services.Services
             List<TransactionsView> holder = new List<TransactionsView>();
 
             var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var txns = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var txns = await _dataContext.Users.Include("UserAccount").Include("User").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var accttxns = await _dataContext.Accounts.Include("User").Where(x => x.UserId == loggedUserId).FirstOrDefaultAsync();
             var userFullName = $"{txns.FirstName} {txns.LastName} ";
             var date = DateTime.Now.ToShortDateString();
             var url = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
@@ -518,8 +527,8 @@ namespace P2PWallet.Services.Services
             }
 
             transactionsHolder = holder.OrderBy(x => x.DateofTransaction).ToList();
-            double creditAmount = 0;
-            double debitAmount = 0;
+            decimal creditAmount = 0;
+            decimal debitAmount = 0;
             StringBuilder sb = new StringBuilder();
             foreach (var txn in transactionsHolder)
             {
@@ -528,11 +537,14 @@ namespace P2PWallet.Services.Services
                 sb.Append(sn++.ToString());
                 sb.Append("</td>");
                 sb.Append("<td>");
-                sb.Append(txn.DateofTransaction.Date.ToString("dd-MM-yyyy"));
+                sb.Append(txn.DateofTransaction.ToString("dd-MM-yyyy hh:mm:ss tt"));
                 sb.Append("</td>");
-                sb.Append("<td colspan='3'>");
+                sb.Append("<td colspan='2'>");
                 if (txn.SenderInfo.Contains(userFullName) && txn.TransType == "DEBIT")
                 {
+                    sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td colspan='2'>");
                     sb.Append(txn.ReceiverInfo);
                     sb.Append("</td>");
                     sb.Append("<td>");
@@ -546,6 +558,9 @@ namespace P2PWallet.Services.Services
                 {
                     sb.Append(txn.SenderInfo);
                     sb.Append("</td>");
+                    sb.Append("<td colspan='2'>");
+                    sb.Append(txn.ReceiverInfo);
+                    sb.Append("</td>");
                     sb.Append("<td>");
                     sb.Append("-");
                     sb.Append("</td>");
@@ -556,6 +571,9 @@ namespace P2PWallet.Services.Services
                 else
                 {
                     sb.Append(txn.SenderInfo);
+                    sb.Append("</td>");
+                    sb.Append("<td colspan='2'>");
+                    sb.Append(txn.ReceiverInfo);
                     sb.Append("</td>");
                     sb.Append("<td>");
                     sb.Append("-");
@@ -578,8 +596,8 @@ namespace P2PWallet.Services.Services
                 htmlContent = htmlContent.Replace("{CustomerAddress}", txns.Address);
                 htmlContent = htmlContent.Replace("{CustomerPhone}", txns.PhoneNumber);
                 htmlContent = htmlContent.Replace("{CustomerEmail}", txns.Email);
-                htmlContent = htmlContent.Replace("{Currency}", txns.UserAccount.Currency);
-                htmlContent = htmlContent.Replace("{CurrentBalance}", txns.UserAccount.Balance.ToString());
+                htmlContent = htmlContent.Replace("{Currency}", accttxns.Currency);
+                htmlContent = htmlContent.Replace("{CurrentBalance}", accttxns.Balance.ToString());
                 htmlContent = htmlContent.Replace("{startdate}", startdate.Date.ToString());
                 htmlContent = htmlContent.Replace("{enddate}", enddate.Date.ToString());
                 htmlContent = htmlContent.Replace("{Transactions}", sb.ToString());
@@ -591,7 +609,7 @@ namespace P2PWallet.Services.Services
             return controller.File(pdfBytes, "application/pdf", "generated.pdf");
 
         }
-        public async Task<ActionResult> GenerateHistoryForEmail (ControllerBase controller, DateDto trasactionDto)
+        public async Task<IFormFile> GenerateHistoryForEmail(DateDto trasactionDto)
         {
             DateTime startdate = DateTime.Parse(trasactionDto.startDate);
             DateTime enddate = DateTime.Parse(trasactionDto.endDate);
@@ -601,6 +619,7 @@ namespace P2PWallet.Services.Services
 
             var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
             var txns = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+            var accttxns = await _dataContext.Accounts.Include("User").Where(x => x.UserId == loggedUserId).FirstOrDefaultAsync();
             var userFullName = $"{txns.FirstName} {txns.LastName} ";
             var date = DateTime.Now.ToShortDateString();
             var url = _hostEnvironment.WebRootPath + Path.DirectorySeparatorChar.ToString()
@@ -622,9 +641,9 @@ namespace P2PWallet.Services.Services
             var transactions = await TransactionHistoryForPdf();
 
             if (enddate < startdate)
-                {
-                    throw new Exception("endDate must be greater than or equal to startDate");
-                }
+            {
+                throw new Exception("endDate must be greater than or equal to startDate");
+            }
 
             if (startdate <= enddate)
             {
@@ -638,11 +657,9 @@ namespace P2PWallet.Services.Services
                 }
             }
 
-           
-
             transactionsHolder = transactionsHolder.OrderBy(x => x.DateofTransaction).ToList();
-            double creditAmount = 0;
-            double debitAmount = 0;
+            decimal creditAmount = 0;
+            decimal debitAmount = 0;
             StringBuilder sb = new StringBuilder();
             foreach (var txn in transactionsHolder)
             {
@@ -701,8 +718,8 @@ namespace P2PWallet.Services.Services
                 htmlContent = htmlContent.Replace("{CustomerAddress}", txns.Address);
                 htmlContent = htmlContent.Replace("{CustomerPhone}", txns.PhoneNumber);
                 htmlContent = htmlContent.Replace("{CustomerEmail}", txns.Email);
-                htmlContent = htmlContent.Replace("{Currency}", txns.UserAccount.Currency);
-                htmlContent = htmlContent.Replace("{CurrentBalance}", txns.UserAccount.Balance.ToString());
+                htmlContent = htmlContent.Replace("{Currency}", accttxns.Currency);
+                htmlContent = htmlContent.Replace("{CurrentBalance}", accttxns.Balance.ToString());
                 htmlContent = htmlContent.Replace("{startdate}", startdate.Date.ToString());
                 htmlContent = htmlContent.Replace("{enddate}", enddate.Date.ToString());
                 htmlContent = htmlContent.Replace("{Transactions}", sb.ToString());
@@ -711,12 +728,22 @@ namespace P2PWallet.Services.Services
             }
 
             byte[] pdfBytes = GeneratePdf(htmlContent);
-            return controller.File(pdfBytes, "application/pdf", "generated.pdf");
+            var stream = new MemoryStream(pdfBytes);
+            var memorystream = new MemoryStream();
+            stream.CopyTo(memorystream);
+            memorystream.Position = 0;
+            return new FormFile(memorystream, 0, memorystream.Length, null, "generated.pdf")
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/pdf"
+            };
+            //return controller.File(pdfBytes, "application/pdf", "generated.pdf");
 
         }
 
-        public async Task<ServiceResponse<string>> SendHistoryToEmail(ControllerBase controller, DateDto dateDto)
+        public async Task<ServiceResponse<string>> SendHistoryToEmail(DateDto dateDto)
         {
+
             var response = new ServiceResponse<string>();
             try
             {
@@ -724,7 +751,7 @@ namespace P2PWallet.Services.Services
                 DateTime todate = DateTime.Parse(dateDto.endDate);
                 var frmdate = fromdate.Date.ToString("dd-MMM-yyyy");
                 var tdate = todate.Date.ToString("dd-MMM-yyyy");
-                IFormFile fileToAttach = (IFormFile)await GenerateHistoryForEmail(controller, dateDto);
+                IFormFile fileToAttach = await GenerateHistoryForEmail(dateDto);
 
                 if (_httpContextAccessor.HttpContext != null)
                 {
@@ -736,8 +763,10 @@ namespace P2PWallet.Services.Services
                         string MailBody = "<!DOCKTYPE html>" +
                                                 "<html>" +
                                                     "<body>" +
-                                                    $"<h3>Dear {loggedInUser.FirstName}</h3>" +
-                                                    $"<h3>Find attached your statement as requested from {frmdate} to {tdate}</h3>" +
+                                                    $"<h3>Dear {loggedInUser.FirstName},</h3>" +
+                                                    $"<h5>Find your attached transaction statement as requested from {frmdate} to {tdate}.</h5>" +
+                                                    $"<br>" +
+                                                    $"<h5>Best regards.</h5>" +
                                                     "</body>" +
                                                 "</html>";
 
@@ -760,5 +789,155 @@ namespace P2PWallet.Services.Services
             }
             return response;
         }
+
+        public async Task<IFormFile> GenerateExcelFile(DateDto dateDto)
+        {
+            List<TransactionsView> newtransactions = new List<TransactionsView>();
+            List<TransactionsView> transactionsHolder = new List<TransactionsView>();
+            var userId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var user = await _dataContext.Users.Where(x => x.Id == userId).FirstOrDefaultAsync();
+            if (user != null)
+            {
+
+                DateTime fromdate = DateTime.Parse(dateDto.startDate);
+                DateTime todate = DateTime.Parse(dateDto.endDate);
+                var frmdate = fromdate.Date.ToString("dd-MMM-yyyy");
+                var tdate = todate.Date.ToString("dd-MMM-yyyy");
+
+                var transactions = await TransactionHistoryForPdf();
+
+                if (todate < fromdate)
+                {
+                    throw new Exception("endDate must be greater than or equal to startDate");
+                }
+
+                if (fromdate <= todate)
+                {
+                    for (var day = fromdate.Date; day.Date <= todate.Date; day = day.AddDays(1))
+                    {
+                        newtransactions = transactions.Where(x => x.DateofTransaction.Date == day.Date).ToList();
+                        if (newtransactions.Count != 0 && newtransactions != null)
+                        {
+                            transactionsHolder.AddRange(newtransactions);
+                        }
+                    }
+                }
+            }
+                transactionsHolder = transactionsHolder.OrderBy(x => x.DateofTransaction).ToList();
+
+                //creating the excel file
+                string filename = @"Transaction Statement";
+                var workbook = new XSSFWorkbook();
+                var sheet = workbook.CreateSheet("Transactions History");
+                //creating the row
+                var header = sheet.CreateRow(0);
+                header.CreateCell(0).SetCellValue("SenderInfo");
+                header.CreateCell(1).SetCellValue("Currency");
+                header.CreateCell(2).SetCellValue("TxnAmount");
+                header.CreateCell(3).SetCellValue("TransType");
+                header.CreateCell(4).SetCellValue("ReceiverInfo");
+                header.CreateCell(5).SetCellValue("DateofTransaction");
+
+                int rowindex = 1;
+                foreach (var item in transactionsHolder)
+                {
+                    var row = sheet.CreateRow(rowindex);
+                    row.CreateCell(0).SetCellValue(item.SenderInfo);
+                    row.CreateCell(1).SetCellValue(item.Currency);
+                    row.CreateCell(2).SetCellValue((double)item.TxnAmount);
+                    row.CreateCell(3).SetCellValue(item.TransType);
+                    row.CreateCell(4).SetCellValue(item.ReceiverInfo);
+                    row.CreateCell(5).SetCellValue(item.DateofTransaction.ToString("dd-MM-yyyy hh:mm:ss tt"));
+                    rowindex++;
+                }
+
+            string path = Path.Combine("C:\\P2PWalletExcelFiles", filename);
+
+            FileStream stream = new FileStream(path, FileMode.Create);
+            workbook.Write(stream, true);
+            var ms = new MemoryStream ();
+            stream.CopyTo(ms);
+            byte[] streambyte = ms.ToArray();
+            workbook.Close();
+            workbook.Dispose();
+
+            //var buffer = stream.ToArray();
+            //var binaryReader = new BinaryReader(stream);
+            //byte[] streambytes = binaryReader.ReadBytes((int)stream.Length);
+            //var bufferLength = buffer.Length;
+            //var file = controller.File(buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+
+
+
+            //byte[] filebytes = File.ReadAllBytes(file);
+            //var filestram = File.Open(file, FileMode.Open);
+
+            // var stream = new MemoryStream();
+            // workbook.Save(stream, Aspose.Cells.SaveFormat.Xlsx);
+            //workbook.Write(stream, true);
+            //var buffer = stream.ToArray();
+            //var bufferLength = buffer.Length;
+            //var file = controller.File(buffer, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename);
+
+            var memorystream = new MemoryStream(streambyte);
+            //stream.CopyTo(memorystream);
+            memorystream.Position = 0;
+
+            return new FormFile(memorystream, 0, memorystream.Length, null, filename)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/xls?"
+            };
+        }
+        public async Task<ServiceResponse<string>> SendExcelToEmail(DateDto dateDto)
+        {
+
+            var response = new ServiceResponse<string>();
+            try
+            {
+                DateTime fromdate = DateTime.Parse(dateDto.startDate);
+                DateTime todate = DateTime.Parse(dateDto.endDate);
+                var frmdate = fromdate.Date.ToString("dd-MMM-yyyy");
+                var tdate = todate.Date.ToString("dd-MMM-yyyy");
+                IFormFile fileToAttach = await GenerateExcelFile(dateDto);
+
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var loggedInUser = await _dataContext.Users.Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+                    if (loggedInUser != null)
+                    {
+                        string subject = "P2PWALLET TRANSACTIONS STATEMENT";
+                        string MailBody = "<!DOCKTYPE html>" +
+                                                "<html>" +
+                                                    "<body>" +
+                                                    $"<h3>Dear {loggedInUser.FirstName},</h3>" +
+                                                    $"<h5>Find your attached transaction statement as requested from {frmdate} to {tdate}.</h5>" +
+                                                    $"<br>" +
+                                                    $"<h5>Best regards.</h5>" +
+                                                    "</body>" +
+                                                "</html>";
+
+                        var sendmail = await _mailService.SendStatementToEmail(loggedInUser.Email, subject, MailBody, fileToAttach);
+                        if (sendmail != false)
+                        {
+                            response.Data = "Successful";
+                        }
+                        else
+                        {
+                            throw new Exception("Mail Service failed");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+
     }
+
 }

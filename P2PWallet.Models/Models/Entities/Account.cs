@@ -23,7 +23,7 @@ namespace P2PWallet.Models.Models.Entities
         [ForeignKey("User")]
         public int UserId { get; set; }
         public string AccountNumber { get; set; } =string.Empty;
-        public double Balance { get; set; } 
+        public decimal Balance { get; set; } 
         public string Currency { get; set; } = string.Empty;
         
         public virtual User User { get; set; }

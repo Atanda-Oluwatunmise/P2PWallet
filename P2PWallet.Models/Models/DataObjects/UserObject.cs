@@ -63,13 +63,13 @@ namespace P2PWallet.Models.Models.DataObjects
     public class AccountDto
     {
         public string AccountNumber { get; set; } = string.Empty;
-        public double Balance { get; set; }
+        public decimal Balance { get; set; }
     }
 
     public class TransferDto
     {
         public string AccountSearch { get; set; } = string.Empty;
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
     }
 
     public class UserSearchDto
@@ -80,7 +80,7 @@ namespace P2PWallet.Models.Models.DataObjects
     public class AccountViewModel
     {
         public string AccountNumber { get; set; } = string.Empty;
-        public double Balance { get; set; }
+        public decimal Balance { get; set; }
         public string Currency { get; set; } = string.Empty;
     }
 
@@ -94,7 +94,7 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Email { get; set; } = string.Empty;
         public string Phonenumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
-        public double Balance { get; set; }
+        public decimal Balance { get; set; }
     }
 
     public class SearchAccountDetails
@@ -109,7 +109,7 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string? SenderInfo { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
-        public double TxnAmount { get; set; }
+        public decimal TxnAmount { get; set; }
         public string TransType { get; set; } = string.Empty;
         public string ReceiverInfo { get; set; } = string.Empty;
         public DateTime DateofTransaction { get; set; }
@@ -129,14 +129,14 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class DepositDto
     {
-        public double Amount { get; set; }
+        public decimal Amount { get; set; }
     }
 
     public class PaystackRequestDto
     {
         public string email { get; set; } = string.Empty;
         public string currency { get; set; } = string.Empty;
-        public double amount { get; set; }
+        public decimal amount { get; set; }
         public string reference { get; set; } = string.Empty;
 
     }

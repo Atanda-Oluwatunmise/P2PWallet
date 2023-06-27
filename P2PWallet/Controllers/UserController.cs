@@ -17,11 +17,12 @@ namespace P2PWallet.Api.Controllers
 
         private readonly DataContext _dataContext;
         private readonly IUserServices _userServices;
-        public UserController(DataContext dataContext, IUserServices userServices)
+        private readonly IMultipleWallets _multipleWallets;
+        public UserController(DataContext dataContext, IUserServices userServices, IMultipleWallets multipleWallets)
         {
             _dataContext = dataContext;
             _userServices = userServices;
-
+            _multipleWallets = multipleWallets;
         }
 
         [HttpPost("register")]
@@ -81,6 +82,13 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpPost("createnewwallet"), Authorize]
+        public async Task<ServiceResponse<String>> CreateNewAccountWallet(string currency)
+        {
+            var result = await _multipleWallets.CreateNewAccountWallet(currency);
+            return result;
+        }
+
         //[HttpGet("verifyimagestatus"), Authorize]
         //public async Task<bool> VerifyImageStatus()
         //{
@@ -88,7 +96,7 @@ namespace P2PWallet.Api.Controllers
         //    return result;
         //}
 
-    
+
 
         //[HttpPost("refreshtoken"), Authorize]
         //public async Task<ServiceResponse<TokenApiDto>> Refresh(TokenApiDto tokenApiDto)

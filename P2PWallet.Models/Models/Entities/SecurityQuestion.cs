@@ -16,4 +16,5 @@ namespace P2PWallet.Models.Models.Entities
         public string Answer { get; set; } = string.Empty;
         public virtual User UserSecurity { get; set; }
     }
+
 }

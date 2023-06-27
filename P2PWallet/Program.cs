@@ -26,6 +26,7 @@ using DinkToPdf.Contracts;
 using NLog;
 using NLog.Web;
 using TheArtOfDev.HtmlRenderer.PdfSharp;
+using P2PWallet.Services.Services.Seeding;
 //using FluentValidation.AspNetCore;
 //using System.Reflection;
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
@@ -78,6 +79,7 @@ try
     builder.Services.AddScoped<IPaymentService, PaymentService>();
     builder.Services.AddScoped<ILoggerManager, LoggerManager>();
     builder.Services.AddScoped<IMailService, MailService>();
+    builder.Services.AddScoped<IMultipleWallets, MultipleWallets>();
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -113,7 +115,7 @@ try
         app.UseSwaggerUI();
     }
 
-    //SeedingService.DataSeeding(app);
+    SeedingService.DataSeeding(app);
     app.UseHttpsRedirection();
 
     app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());

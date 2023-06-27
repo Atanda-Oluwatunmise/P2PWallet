@@ -59,8 +59,16 @@ namespace P2PWallet.Api.Controllers
         [HttpPost("generateemailpdf"), Authorize]
         public async Task<ServiceResponse<string>> SendHistoryToEmail(DateDto dateDto)
         {
-            var result = await _transactionService.SendHistoryToEmail(this, dateDto);
+            var result = await _transactionService.SendHistoryToEmail(dateDto);
             return result;
         }
+
+        [HttpPost("generateexcel"), Authorize]
+        public async Task<ServiceResponse<string>> SendExcelToEmail(DateDto dateDto)
+        {
+            var result = await _transactionService.SendExcelToEmail(dateDto);
+            return result;
+        }
+
     }
 }

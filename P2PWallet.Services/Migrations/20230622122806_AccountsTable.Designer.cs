@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using P2PWallet.Services;
 
@@ -11,9 +12,11 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230622122806_AccountsTable")]
+    partial class AccountsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,8 +37,8 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double>("Balance")
+                        .HasColumnType("float");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -76,8 +79,8 @@ namespace P2PWallet.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
 
                     b.Property<string>("Bank")
                         .HasColumnType("nvarchar(max)");
@@ -122,30 +125,6 @@ namespace P2PWallet.Services.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Deposit");
-                });
-
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLAccount", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal?>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Currency")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("GLAccounts");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
@@ -293,8 +272,8 @@ namespace P2PWallet.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -401,16 +380,6 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("DepositUser");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLAccount", b =>
-                {
-                    b.HasOne("P2PWallet.Models.Models.Entities.User", "UserGL")
-                        .WithMany("UserGLAccount")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("UserGL");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "UserImage")
@@ -483,8 +452,6 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("UserAccount");
 
                     b.Navigation("UserDeposit");
-
-                    b.Navigation("UserGLAccount");
 
                     b.Navigation("UserImageDetail")
                         .IsRequired();

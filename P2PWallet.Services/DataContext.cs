@@ -14,6 +14,23 @@ namespace P2PWallet.Services
         { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Account>(entity =>
+            {
+                entity.HasOne(e => e.User)
+                .WithMany(a => a.UserAccount)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
+            
+            modelBuilder.Entity<GLAccount>(entity =>
+            {
+                entity.HasOne(e => e.UserGL)
+                .WithMany(a => a.UserGLAccount)
+                .HasForeignKey(a => a.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.HasOne(d => d.SenderUser)
@@ -86,6 +103,10 @@ namespace P2PWallet.Services
            public DbSet<ResetPassword> ResetPasswords { get; set; }
            public DbSet<ResetPin> ResetPins { get; set; }
            public DbSet<ImageDetail> ImageDetails { get; set; }
+           public DbSet<CurrenciesWallet> CurrenciesWallets { get; set; }
+           public DbSet<GLAccount> GLAccounts { get; set; }
+
+
 
     }
 }
