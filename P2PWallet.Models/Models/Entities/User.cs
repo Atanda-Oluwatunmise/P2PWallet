@@ -21,7 +21,7 @@ namespace P2PWallet.Models.Models.Entities
             UserResetPassword = new HashSet<ResetPassword>();
             UserResetPin = new HashSet<ResetPin>();
             Userpin = new HashSet<Pin>();
-            UserGLAccount = new HashSet<GLAccount>();
+            UserWalletCharge = new HashSet<WalletCharge>();
 
         }
 
@@ -44,7 +44,7 @@ namespace P2PWallet.Models.Models.Entities
 
         public virtual ICollection<Account> UserAccount { get; set; }
         public virtual ImageDetail UserImageDetail { get; set; }
-        public virtual ICollection<GLAccount> UserGLAccount { get; set; }
+        public virtual ICollection<WalletCharge> UserWalletCharge { get; set; }
         public virtual ICollection<Transaction> UserTransaction { get; set; }
         public virtual ICollection<Transaction> ReceiverTransaction { get; set; }
         public virtual ICollection<Deposit> UserDeposit { get; set; }

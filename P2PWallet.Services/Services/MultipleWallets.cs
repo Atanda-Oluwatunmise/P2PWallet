@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MimeKit;
+using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
 using System;
@@ -16,18 +18,20 @@ namespace P2PWallet.Services.Services
     public class MultipleWallets:IMultipleWallets
     {
         public static Account account = new Account();
-        public static GLAccount glAccount = new GLAccount();
+        public static WalletCharge glAccount = new WalletCharge();
         private readonly DataContext _dataContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<MultipleWallets> _logger;
-        public MultipleWallets(DataContext dataContext, IHttpContextAccessor httpContextAccessor, ILogger<MultipleWallets> logger) 
+        private readonly ITransactionService _transactionService;
+        public MultipleWallets(DataContext dataContext, IHttpContextAccessor httpContextAccessor, ILogger<MultipleWallets> logger, ITransactionService transactionService) 
         {
             _dataContext = dataContext;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            _transactionService = transactionService;
         }
 
-        public async Task<ServiceResponse<String>> CreateNewAccountWallet(string currency)
+        public async Task<ServiceResponse<String>> CreateNewAccountWallet(CurrencyObj currencyObj)
         {
             var response = new ServiceResponse<String>();
             try
@@ -35,20 +39,22 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var user = await _dataContext.Users.Include("UserAccount").Include("UserGLAccount").Where(x => x.Id == loggeduserId).FirstOrDefaultAsync();
+                    var user = await _dataContext.Users.Include("UserAccount").Include("UserWalletCharge").Where(x => x.Id == loggeduserId).FirstOrDefaultAsync();
                     var useraccount = await _dataContext.Accounts.Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
-                    var userglaccount = await _dataContext.GLAccounts.Include("UserGL").Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
-                    decimal chargeamount = 5;
+                    var userwalletcharge = await _dataContext.WalletCharges.Include("UserWalletCharge").Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
+                    var currenciesList = await _dataContext.CurrenciesWallets.Where(x => x.Currencies == currencyObj.Currency).FirstOrDefaultAsync();
+
+                    decimal chargeamount = (decimal)currenciesList.ChargeAmount;
                     decimal newBalance = 0;
 
-                    if (user.UserAccount.Count() >= 3) 
+                    if (user.UserAccount.Count() >= 4) 
                     {
                         throw new Exception("Cannot have more than 3 Wallets");
                     }
-                    var accountcount = await _dataContext.Accounts.Where(x => x.UserId == loggeduserId && x.Currency.Contains(currency)).ToListAsync();
+                    var accountcount = await _dataContext.Accounts.Where(x => x.UserId == loggeduserId && x.Currency.Contains(currencyObj.Currency)).ToListAsync();
+                    var glaccount = await _dataContext.GLAccounts.Where(x => x.Currency.ToLower() == "ngn").FirstOrDefaultAsync();
 
-
-                        if (user.UserAccount.Count() < 3)
+                        if (user.UserAccount.Count() < 4)
                     {
                         if(useraccount.Balance < chargeamount)
                         {
@@ -64,20 +70,31 @@ namespace P2PWallet.Services.Services
                             useraccount.Balance = useraccount.Balance - chargeamount;
                             _dataContext.SaveChanges();
 
-                            if (userglaccount.Currency == useraccount.Currency)
+                            var newtransaction = new Transaction()
                             {
-                                userglaccount.Amount += chargeamount;
+                                SenderId = user.Id,
+                                SenderAccountNumber = useraccount.AccountNumber,
+                                RecipientAccountNumber = glaccount.GLNumber,
+                                Reference = _transactionService.ReferenceGenerator(),
+                                Amount= chargeamount,
+                                Currency = useraccount.Currency,
+                                DateofTransaction = DateTime.Now
+                            };
+                            await _dataContext.Transactions.AddAsync(newtransaction);
+                            await _dataContext.SaveChangesAsync();
+
+                            glaccount.Balance += chargeamount;
+                            _dataContext.SaveChanges();
+
+                            if (userwalletcharge.Currency == useraccount.Currency)
+                            {
+                                userwalletcharge.Amount += chargeamount;
                                 _dataContext.SaveChanges();
                             }
                             else
                             {
-                                var glAccount = new GLAccount()
-                                {
-                                    Amount = chargeamount,
-                                    Currency = useraccount.Currency,
-                                    UserId = loggeduserId
-                                };
-                                _dataContext.GLAccounts.Add(glAccount);
+                                userwalletcharge.Amount = chargeamount;
+                                userwalletcharge.Currency = useraccount.Currency;
                                 await _dataContext.SaveChangesAsync();
                             }
 
@@ -92,14 +109,14 @@ namespace P2PWallet.Services.Services
                                 UserId = loggeduserId,
                                 AccountNumber = userAccounNumber,
                                 Balance = newBalance,
-                                Currency = currency
+                                Currency = currencyObj.Currency.ToUpper()
 
                             };
 
                             _dataContext.Accounts.Add(newaccount);
                             await _dataContext.SaveChangesAsync();
 
-                            response.Data = $"{currency} account created successfully";
+                            response.Data = $"{currencyObj.Currency} account created successfully";
                         }
                     }
                 }
@@ -111,6 +128,78 @@ namespace P2PWallet.Services.Services
                 _logger.LogError($"An error just occured...... {ex.Message}");
             }
 
+            return response;
+        }
+
+        public async Task<ServiceResponse<String>> VerifyCurrency(CurrencyObj currencyObj)
+        {
+            var response = new ServiceResponse<String>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var user = await _dataContext.Users.Include("UserAccount").Include("UserWalletCharge").Where(x => x.Id == loggeduserId).FirstOrDefaultAsync();
+                    if(user != null )
+                    {
+                        var currenciesList = await _dataContext.CurrenciesWallets.Where(x => x.Currencies == currencyObj.Currency).FirstOrDefaultAsync();
+                        if(currenciesList != null)
+                        {
+                            response.Data = currenciesList.ChargeAmount.ToString();
+                        }
+                        else
+                        {
+                            response.Data = "Wallet currency is not available";
+                            _logger.LogError($"Error Message... {response.Data}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"An Error just occurred.....{ex.Message}");
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<List<WalletResponseView>>> VerifyAccount(CurrencyObj currencyObj)
+        {
+            var response = new ServiceResponse<List<WalletResponseView>>();
+            List<WalletResponseView> accountDetails = new List<WalletResponseView>();
+
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var user = await _dataContext.Accounts.Include("User").Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
+                    if (user != null)
+                    {
+                        var accountCurrency = await _dataContext.Accounts.Where(x => x.UserId == loggeduserId && x.Currency.ToLower() == currencyObj.Currency.ToLower()).FirstOrDefaultAsync();
+                        if (accountCurrency == null)
+                        {
+                            throw new Exception("Wallet Account does not exist");
+                        }
+                        var data = new WalletResponseView()
+                        {
+                            Currency = accountCurrency.Currency,
+                            AccountNumber = accountCurrency.AccountNumber,
+                            Balance = accountCurrency.Balance
+                        };
+                        accountDetails.Add(data);
+                        response.Data = accountDetails;
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"An Error just occured.... {ex.Message}");
+            }
             return response;
         }
     }

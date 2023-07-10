@@ -21,15 +21,17 @@ namespace P2PWallet.Services.Services.Seeding
         public static void SeedCurrencies(DataContext dataContext)
         {
             if (dataContext.CurrenciesWallets.Any())
+            {
                 return; //DB has been seeded with module data 
-
+            }
             var currencyList = new CurrenciesWallet[]
             {
-                new CurrenciesWallet(){Currencies = "NGN"},
-                new CurrenciesWallet(){Currencies = "USD"},
-                new CurrenciesWallet(){Currencies = "AED"},
-                new CurrenciesWallet(){Currencies = "CAD"},
-                new CurrenciesWallet(){Currencies = "EUR"}
+                new CurrenciesWallet(){Currencies = "NGN", ChargeAmount = 0},
+                new CurrenciesWallet(){Currencies = "USD", ChargeAmount = 765},
+                new CurrenciesWallet(){Currencies = "AED", ChargeAmount = 210},
+                new CurrenciesWallet(){Currencies = "CAD", ChargeAmount = 580},
+                new CurrenciesWallet(){Currencies = "EUR", ChargeAmount = 837},
+                new CurrenciesWallet(){Currencies = "GBP", ChargeAmount = 973}
             };
             dataContext.ChangeTracker.Entries().Where(e => e.State == EntityState.Added);
             dataContext.CurrenciesWallets.AddRange(currencyList);

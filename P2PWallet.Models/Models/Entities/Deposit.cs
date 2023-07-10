@@ -16,6 +16,7 @@ namespace P2PWallet.Models.Models.Entities
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public string Currency { get; set; } = string.Empty;
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Amount { get; set; }
         public string TxnRef { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;

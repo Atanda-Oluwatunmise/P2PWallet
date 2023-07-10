@@ -83,12 +83,25 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPost("createnewwallet"), Authorize]
-        public async Task<ServiceResponse<String>> CreateNewAccountWallet(string currency)
+        public async Task<ServiceResponse<String>> CreateNewAccountWallet(CurrencyObj currencyObj)
         {
-            var result = await _multipleWallets.CreateNewAccountWallet(currency);
+            var result = await _multipleWallets.CreateNewAccountWallet(currencyObj);
             return result;
         }
 
+        [HttpPost("verifycurrency"), Authorize]
+        public async Task<ServiceResponse<String>> VerifyCurrency(CurrencyObj currencyObj)
+        {
+            var result = await _multipleWallets.VerifyCurrency(currencyObj);
+            return result;
+        }
+
+        [HttpPost("verifyaccount"), Authorize]
+        public async Task<ServiceResponse<List<WalletResponseView>>> VerifyAccount(CurrencyObj currencyObj)
+        {
+            var result = await _multipleWallets.VerifyAccount(currencyObj);
+            return result;
+        }
         //[HttpGet("verifyimagestatus"), Authorize]
         //public async Task<bool> VerifyImageStatus()
         //{

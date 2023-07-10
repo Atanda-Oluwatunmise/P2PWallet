@@ -149,7 +149,12 @@ namespace P2PWallet.Services.Services
                             AccountNumber = userAccounNumber,
                             Balance = account.Balance
                         };
+                        var newgl = new WalletCharge()
+                        {
+                            UserId = newuser.Id
+                        };
                         await _dataContext.Accounts.AddAsync(newaccount);
+                        await _dataContext.WalletCharges.AddAsync(newgl);
                         await _dataContext.SaveChangesAsync();
                     }
                 }
@@ -187,7 +192,7 @@ namespace P2PWallet.Services.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                //new Claim("AccountNumber", user.UserAccount.AccountNumber),
+                //new Claim("AccountNumber", user.),
                 new Claim(ClaimTypes.Role, "Admin")
             };
             // defining a symmetric security key that creates the web token
@@ -348,10 +353,10 @@ namespace P2PWallet.Services.Services
                             Phonenumber = userAccount.User.PhoneNumber,
                             Email = userAccount.User.Email,
                             Address = userAccount.User.Address,
-                            Balance = userAccount.Balance
+                            Balance = userAccount.Balance,
+                            Currency = userAccount.Currency
                         };
                         accountDetails.Add(data);
-
                     }
                     response.Data = accountDetails;
                 }

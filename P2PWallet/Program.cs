@@ -115,7 +115,6 @@ try
         app.UseSwaggerUI();
     }
 
-    SeedingService.DataSeeding(app);
     app.UseHttpsRedirection();
 
     app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
@@ -125,6 +124,8 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
+
+    SeedingService.DataSeeding(app);
 
     app.Run();
 }

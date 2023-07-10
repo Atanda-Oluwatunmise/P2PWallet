@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using P2PWallet.Services;
 
@@ -11,9 +12,11 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230627125848_seedData")]
+    partial class seedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -134,22 +137,18 @@ namespace P2PWallet.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("Balance")
+                    b.Property<decimal?>("Amount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Currency")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GLName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GLNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("GLAccounts");
                 });
@@ -386,30 +385,6 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.WalletCharge", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal?>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Currency")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("WalletCharges");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Account", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "User")
@@ -429,6 +404,16 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired();
 
                     b.Navigation("DepositUser");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLAccount", b =>
+                {
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "UserGL")
+                        .WithMany("UserGLAccount")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("UserGL");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
@@ -496,16 +481,6 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("SenderUser");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.WalletCharge", b =>
-                {
-                    b.HasOne("P2PWallet.Models.Models.Entities.User", "UserWalletCharge")
-                        .WithMany("UserWalletCharge")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("UserWalletCharge");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.User", b =>
                 {
                     b.Navigation("ReceiverTransaction");
@@ -513,6 +488,8 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("UserAccount");
 
                     b.Navigation("UserDeposit");
+
+                    b.Navigation("UserGLAccount");
 
                     b.Navigation("UserImageDetail")
                         .IsRequired();
@@ -524,8 +501,6 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("UserSecurityQuestion");
 
                     b.Navigation("UserTransaction");
-
-                    b.Navigation("UserWalletCharge");
 
                     b.Navigation("Userpin");
                 });

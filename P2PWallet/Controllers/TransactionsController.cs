@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Interface;
+using P2PWallet.Services.Migrations;
 using P2PWallet.Services.Services;
 
 namespace P2PWallet.Api.Controllers
@@ -43,7 +44,7 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPost("usertransactionsbydate"), Authorize]
-        public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(DateDto dateDto)
+        public async Task<ServiceResponse<List<TransactionsView>>> UserTransactionsByDate(NewDateDto dateDto)
         {
             var result = await _transactionService.UserTransactionsByDate(dateDto);
             return result;
@@ -67,6 +68,41 @@ namespace P2PWallet.Api.Controllers
         public async Task<ServiceResponse<string>> SendExcelToEmail(DateDto dateDto)
         {
             var result = await _transactionService.SendExcelToEmail(dateDto);
+            return result;
+        }     
+        
+        [HttpPost("downloadexcel"), Authorize]
+        public async Task<ActionResult> DownloadExcelFile(DateDto dateDto)
+        {
+            var result = await _transactionService.DownloadExcelFile(this, dateDto);
+            return result;
+        }
+
+        [HttpPost("creategl")]
+        public async Task<ServiceResponse<GLAccountView>> CreateGlAccount(GLAccountDTO gLAccount)
+        {
+            var result = await _transactionService.CreateGlAccount(gLAccount);
+            return result;
+        }
+
+        [HttpPost("convertcurrency"), Authorize]
+        public ConverterView CurrencyConverter(ConverterDto converterDto)
+        {
+            var result =  _transactionService.CurrencyConverter(converterDto);
+            return result;
+        }
+
+        [HttpPost("fundforeignwallet"), Authorize]
+        public async Task<ServiceResponse<string>> FundForeignWallet(ConverterDto converterDto)
+        {
+            var result = await _transactionService.FundForeignWallet(converterDto);
+            return result;
+        }
+
+        [HttpPost("foreignwallettransfers"), Authorize]
+        public async Task<ServiceResponse<string>> ForeignTransfers(ForeignTransferDto foreignTransferDto)
+        {
+            var result = await _transactionService.ForeignTransfers(foreignTransferDto);
             return result;
         }
 

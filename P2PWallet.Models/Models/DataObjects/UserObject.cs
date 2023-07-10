@@ -95,6 +95,7 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Phonenumber { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public decimal Balance { get; set; }
+        public string Currency { get; set; } = string.Empty;
     }
 
     public class SearchAccountDetails
@@ -319,6 +320,20 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string startDate { get; set; }
         public string endDate { get; set; }
+        public string currency { get; set; }
+    } 
+    
+    public class NewDateDto
+    {
+        public string startDate { get; set; }
+        public string endDate { get; set; }
+    }  
+    
+    public class EmailReportDto
+    {
+        public string StartDate { get; set; }
+        public string EndDate { get; set; }
+        public string ReportType { get; set; }
     }
 
     public class TransactionHistoryDto
@@ -326,6 +341,52 @@ namespace P2PWallet.Models.Models.DataObjects
         public string fromDate { get; set; }
         public string toDate { get; set; }
         public string txnType { get; set; }
-    }   
+        public string Currency { get; set; }
+    } 
+    
+    public class CurrencyObj
+    {
+        public string Currency { get; set; }
+    }
+
+    public class WalletResponseView
+    {
+        public string Currency { get; set; }
+        public string AccountNumber { get; set; }
+        public decimal Balance { get; set; }
+    }
+
+    public class GLAccountDTO
+    {
+        public string GLName { get; set; }
+        public string Currency { get; set; }
+    }
+
+    public class GLAccountView
+    {
+        public string GLName { get; set; }
+        public string Currency { get; set; }
+        public string Balance { get; set; }
+    }
+
+    public class ConverterDto
+    {
+        public string Currency { get; set; }
+        public decimal Amount { get; set; }
+    }
+    
+    public class ConverterView
+    {
+        public string Currency { get; set; }
+        public decimal NairaAmount { get; set; }
+        public decimal WalletAmount { get; set; }
+    }
+    
+    public class ForeignTransferDto
+    {
+        public string AccountSearch { get; set; } = string.Empty;
+        public string Currency { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+    }
 
 }

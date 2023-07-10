@@ -22,10 +22,10 @@ namespace P2PWallet.Services
                 .OnDelete(DeleteBehavior.Cascade);
             });
             
-            modelBuilder.Entity<GLAccount>(entity =>
+            modelBuilder.Entity<WalletCharge>(entity =>
             {
-                entity.HasOne(e => e.UserGL)
-                .WithMany(a => a.UserGLAccount)
+                entity.HasOne(e => e.UserWalletCharge)
+                .WithMany(a => a.UserWalletCharge)
                 .HasForeignKey(a => a.UserId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -96,6 +96,7 @@ namespace P2PWallet.Services
         }
            public DbSet<Deposit> Deposit { get; set; }
            public DbSet<Pin> Pin { get; set; }
+           public DbSet<GLAccount> GLAccounts { get; set; }
            public DbSet<Account> Accounts { get; set; }
            public DbSet<User> Users { get; set; }
            public DbSet<Transaction> Transactions { get; set; }
@@ -104,7 +105,7 @@ namespace P2PWallet.Services
            public DbSet<ResetPin> ResetPins { get; set; }
            public DbSet<ImageDetail> ImageDetails { get; set; }
            public DbSet<CurrenciesWallet> CurrenciesWallets { get; set; }
-           public DbSet<GLAccount> GLAccounts { get; set; }
+           public DbSet<WalletCharge> WalletCharges { get; set; }
 
 
 
