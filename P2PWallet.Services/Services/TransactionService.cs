@@ -1388,13 +1388,13 @@ namespace P2PWallet.Services.Services
                         // add the transactions to transactions table
                         var newtransaction = new Transaction()
                         {
-                            SenderId = loggedInuserAccount.Id,
-                            RecipientId = receiverAcc.Id,
+                            SenderId = loggedInuserAccount.UserId,
+                            RecipientId = receiverAcc.UserId,
                             SenderAccountNumber = loggedInuserAccount.AccountNumber,
                             RecipientAccountNumber = receiverAcc.AccountNumber,
                             Reference = ReferenceGenerator(),
                             Amount = foreignTransferDto.Amount,
-                            Currency = foreignTransferDto.Currency,
+                            Currency = foreignTransferDto.Currency.ToUpper(),
                             DateofTransaction = DateTime.Now
                         };
 

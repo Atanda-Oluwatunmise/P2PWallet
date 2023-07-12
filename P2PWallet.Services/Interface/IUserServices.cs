@@ -20,6 +20,8 @@ namespace P2PWallet.Services.Interface
         public bool VerifyPasswordHash(string password, byte[] passwordKey, byte[] passwordHash);
         public Task<ServiceResponse<List<AccountDetails>>> GetMyAccountNumber();
         public Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch);
+        public Task<ServiceResponse<List<SearchAccountDetails>>> GetUserForeignDetails(ForeignUserSearchDto userSearch);
+
         public void CreatePasswordHash(string password, out byte[] passwordKey, out byte[] passwordHash);
         public Task<ServiceResponse<List<EditViewModel>>> EditUserInfo(EditViewModel request);
         public Task<ServiceResponse<string>> SaveImage([FromBody] ImageViewmodel imageview);

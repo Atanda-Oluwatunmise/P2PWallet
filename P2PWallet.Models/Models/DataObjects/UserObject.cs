@@ -75,6 +75,12 @@ namespace P2PWallet.Models.Models.DataObjects
     public class UserSearchDto
     {
         public string AccountSearch { get; set; } = string.Empty;
+    }   
+    
+    public class ForeignUserSearchDto
+    {
+        public string AccountSearch { get; set; } = string.Empty;
+        public string Currency { get; set; } = string.Empty;
     }
 
     public class AccountViewModel

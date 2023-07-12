@@ -388,6 +388,54 @@ namespace P2PWallet.Services.Services
                             .Where(x => x.UserId == searchUser.Id)
                             .FirstOrDefaultAsync();
 
+                if (userId == null)
+                {
+                    var data = new SearchAccountDetails()
+                    {
+                        AccountName = searchUser.User.FirstName + " " + searchUser.User.LastName,
+                        AccountNumber = searchUser.AccountNumber
+                    };
+                    userDetails.Add(data);
+                }
+                else
+                {
+                    var data = new SearchAccountDetails()
+                    {
+                        AccountName = userId.User.FirstName + " " + userId.User.LastName,
+                        AccountNumber = userId.AccountNumber
+                    };
+                    userDetails.Add(data);
+                }
+                response.Data = userDetails;
+
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+            }
+            return response;
+        }
+        public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserForeignDetails(ForeignUserSearchDto userSearch)
+        {
+            var response = new ServiceResponse<List<SearchAccountDetails>>();
+            List<SearchAccountDetails> userDetails = new List<SearchAccountDetails>();
+            try
+            {
+                var searchUser = await _dataContext.Accounts.Include("User").FirstOrDefaultAsync(x => x.AccountNumber == userSearch.AccountSearch
+                                                                                   || x.User.Username == userSearch.AccountSearch
+                                                                                   || x.User.Email == userSearch.AccountSearch);
+
+              
+                var userId = await _dataContext.Accounts.Include("User")
+                            .Where(x => x.UserId == searchUser.Id && x.Currency == userSearch.Currency)
+                            .FirstOrDefaultAsync();
+
+                if (userId == null)
+                {
+                    throw new Exception("Wallet Account does not exist for receipient");
+                }
+
                 if (userId != null)
                 {
                     var data = new SearchAccountDetails()
