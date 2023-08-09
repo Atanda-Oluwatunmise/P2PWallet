@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -165,7 +166,8 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class ResetPasswordDto
     {
-        public string Password { get; set; } = string.Empty;
+        public string Username { get; set; }
+        public string Password { get; set; }
     }
 
     public class ChangePasswordDto
@@ -190,6 +192,20 @@ namespace P2PWallet.Models.Models.DataObjects
                     .Matches(@"[0-9]+").WithMessage("Your password must contain at least one number.")
                     .Matches(@"[\@\!\?\*\.]+").WithMessage("Your password must contain at least one (!? *.).");
             RuleFor(x => x.ConfirmPassword).NotEmpty().WithMessage("Please confirm your password.");
+
+        }
+    } 
+    
+    public class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDto>
+    {
+        public ResetPasswordDtoValidator()
+        {
+            RuleFor(x => x.Password).NotNull().NotEmpty().Length(1, 20).WithMessage("Please Enter your  password.")
+                    .MinimumLength(8).WithMessage("Your password length must be at least 8.")
+                    .MaximumLength(16).WithMessage("Your password length must not exceed 16.")
+                    .Matches(@"[A-Z]+").WithMessage("Your password must contain at least one uppercase letter.")
+                    .Matches(@"[a-z]+").WithMessage("Your password must contain at least one lowercase letter.")
+                    .Matches(@"[0-9]+").WithMessage("Your password must contain at least one number.");
 
         }
     }
@@ -292,7 +308,6 @@ namespace P2PWallet.Models.Models.DataObjects
                     .Matches(@"[\@\!\?\*\.]+").WithMessage("Your password must contain at least one (!? *.).");
             RuleFor(x => x.ConfirmPassword).NotEmpty().WithMessage("Please confirm your password.");
             RuleFor(x => x.Token).NotNull().NotEmpty();
-
         }
     }
 
@@ -395,4 +410,134 @@ namespace P2PWallet.Models.Models.DataObjects
         public decimal Amount { get; set; }
     }
 
+    public class CreditNotificationView
+    {
+        public string NotificationTitle { get; set; }
+        public string NotificationBody { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public string Reference { get; set; }
+    }
+
+    public class LockingEmailDto
+    {
+        [EmailAddress]
+        public string Email { get; set;}
+    }
+
+    public class ListOfLockedUsers
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Reason { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    public class ListOfGLAccounts
+    {
+        public string Name { get; set; }
+        public string GLAccount { get; set; }
+        public string Currency { get; set; }
+        public decimal Balance { get; set; }
+    }
+    public class GLTransactionHistory
+    {
+        public string GLAccount { get; set; }
+        public string Narration { get; set; }
+        public string Type { get; set; }
+        public string Currency { get; set; }
+        public decimal Amount { get; set; }
+        public string Reference { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    public class ChargeorRateDTo
+    {
+        public string Currency { get; set; }
+        public decimal Amount { get; set; }
+    }
+    public class RateDto
+    {
+        public string currency { get; set; }
+        public decimal amount { get; set; }
+    }
+
+    public class LockingUserDto
+    {
+        [EmailAddress]
+        public string Email { get; set;}
+        public string Reason { get; set;}
+    }
+
+    public class LockingUserValidator : AbstractValidator<LockingUserDto>
+    {
+        public LockingUserValidator()
+        {
+            RuleFor(a => a.Email).NotEmpty().WithMessage("Your email cannot be empty");
+            RuleFor(x => x.Reason).NotEmpty().WithMessage("Your Reason cannot be empty.");
+        }
+    }
+
+    public class NotificationDto
+    {
+        public string Sender { get; set; }
+        public string AccountNumber { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    public class ResetAdminDto
+    {
+        public string Email { get; set; }
+        public string NewPassword { get; set; }
+    }  
+    
+    public class DisableAdminDto
+    {
+        public string Email { get; set; }
+    }  
+    public class RetirieveNotificationDto
+    {
+        public string Reference { get; set; }
+    }
+
+    public class NotificationView
+    {
+        public string Message { get; set; }
+        public string Reference { get; set; }
+    }
+
+    public class KycNotificationView
+    {
+        public string Name { get; set; }
+        public string Message { get; set; }
+
+    }
+
+    public class AdminAccount
+    {
+        public string Username { get; set; }
+    }
+
+    public class KycDto
+    {
+        public List<IFormFile> UploadedImage { get; set; }
+    }
+
+    public class KycDocumentsView
+    {
+        public string Name { get; set; }
+    }
+
+    public class PendingUsersView
+    {
+        public string Username { get; set; }
+    }
+
+    public class KycUserDetails
+    {
+        public byte[] ImagePath { get; set; }
+        public string ImageName { get; set; }
+        
+    }
 }

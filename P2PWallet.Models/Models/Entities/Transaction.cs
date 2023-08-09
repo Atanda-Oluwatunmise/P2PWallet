@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Models.Models.Entities
 {
-    public class Transaction
+    public class Transactions
     {
         [Key]
         public int Id { get; set; }

@@ -8,6 +8,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="Aspose.Cells" Version="23.6.0" />
+	  <PackageReference Include="Dapper" Version="2.0.143" />
 	  <PackageReference Include="DinkToPdf" Version="1.0.8" />
 	  <PackageReference Include="DinkToPdfCopy" Version="1.0.0" />
 	  <PackageReference Include="DinkToPdfIncludesDependencies" Version="1.0.8" />
@@ -16,6 +17,7 @@
 	  <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />
 	  <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.3" />
 	  <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.2" />
+	  <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.9" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.3">
       <PrivateAssets>all</PrivateAssets>
@@ -31,6 +33,7 @@
     <PackageReference Include="NLog.Web.AspNetCore" Version="5.2.3" />
     <PackageReference Include="NPOI" Version="2.6.0" />
     <PackageReference Include="Polybioz.HtmlRenderer.PdfSharp.Core" Version="1.0.0" />
+    <PackageReference Include="SqlTableDependency" Version="8.5.8" />
   </ItemGroup>
 
 </Project>

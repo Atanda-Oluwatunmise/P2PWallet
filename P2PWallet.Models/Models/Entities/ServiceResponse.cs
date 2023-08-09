@@ -11,7 +11,7 @@ namespace P2PWallet.Models.Models.Entities
         public ServiceResponse()
         {
             Status = true;
-            StatusMessage = "Succcessful";
+            StatusMessage = "Successful";
         }
         public bool Status { get; set; }
         public string StatusMessage { get; set; } = string.Empty;

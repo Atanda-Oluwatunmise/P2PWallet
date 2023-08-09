@@ -182,7 +182,7 @@ namespace P2PWallet.Services.Services
                 await _dataContext.SaveChangesAsync();
 
 
-                var txnDeposit = new Transaction()
+                var txnDeposit = new Transactions()
                 {
                     RecipientId = payerAccount.Id,
                     RecipientAccountNumber = userAccount.AccountNumber,

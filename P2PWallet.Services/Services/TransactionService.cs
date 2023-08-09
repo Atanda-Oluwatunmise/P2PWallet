@@ -59,24 +59,36 @@ using Microsoft.Extensions.Logging;
 using P2PWallet.Models.Models.DataObjects.WebHook;
 using P2PWallet.Services.Migrations;
 using NPOI.POIFS.Crypt.Dsig;
+using System.Data;
+using Microsoft.Data.SqlClient;
+using Octokit;
+using Notification = P2PWallet.Models.Models.Entities.Notification;
+using Account = P2PWallet.Models.Models.Entities.Account;
+using User = P2PWallet.Models.Models.Entities.User;
+using NPOI.SS.Formula.Functions;
+using Microsoft.AspNetCore.SignalR;
+using P2PWallet.Services.Hubs;
 //using Octokit;
 
 namespace P2PWallet.Services.Services
 {
     public class TransactionService: ITransactionService
     {
+        private readonly IHubContext<NotificationHub> _hub;
+        private string connectionString;
         public static User user = new User();
         public static Account account = new Account();
         private readonly DataContext _dataContext;
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMailService _mailService;
+        private readonly INotificationService _notificationService;
         private readonly IWebHostEnvironment _hostEnvironment;
         private readonly IConverter _converter;
         private readonly ILogger _logger;
         static readonly HttpClient client = new HttpClient();
 
-        public TransactionService(DataContext dataContext, ILogger<TransactionService> logger,  IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment hostEnvironment, IConverter converter)
+        public TransactionService(IHubContext<NotificationHub> hub, DataContext dataContext, ILogger<TransactionService> logger,  IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMailService mailService, IWebHostEnvironment hostEnvironment, IConverter converter, INotificationService notificationService)
         {
             _dataContext = dataContext;
             _configuration = configuration;
@@ -85,8 +97,68 @@ namespace P2PWallet.Services.Services
             _hostEnvironment = hostEnvironment;
             _converter = converter;
             _logger = logger;
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            _notificationService = notificationService;
+            _hub = hub;
         }
 
+        public List<Transactions> GetTransactions()
+        {
+            List<Transactions> transactions = new List<Transactions>();
+            Transactions transaction;
+
+            var data = GetProductDetailsFromDb();
+
+            foreach (DataRow row in data.Rows)
+            {
+                transaction = new Transactions()
+                {
+                    Id = Convert.ToInt32(row["Id"]),
+                    SenderId = Convert.ToInt32(row["SenderId"]),
+                    RecipientId = Convert.ToInt32(row["RecipientId"]),
+                    SenderAccountNumber = row["SenderAccountNumber"].ToString(),
+                    RecipientAccountNumber = row["RecipientAccountNumber"].ToString(),
+                    Reference = row["Reference"].ToString(),
+                    Amount = Convert.ToDecimal(row["Amount"]),
+                    Currency = row["Currency"].ToString(),
+                    DateofTransaction = (DateTime)row["DateofTransaction"],
+                };
+                transactions.Add(transaction);
+                if (transactions.Count >= 4)
+                    break;
+
+            }
+            return transactions;
+        }
+        public DataTable GetProductDetailsFromDb() 
+        {
+            var query = "SELECT * FROM Transactions";
+            DataTable dataTable = new DataTable();
+
+            using (SqlConnection connection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
+            {
+                try
+                {
+                    connection.Open();
+                    using(SqlCommand command =  new SqlCommand(query, connection))
+                    {
+                        using (SqlDataReader reader = command.ExecuteReader())
+                        {
+                            dataTable.Load(reader);
+                        }
+                    }
+                    return dataTable;
+                }
+                catch(Exception ex)
+                {
+                    throw;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
 
         public string ReferenceGenerator()
         {
@@ -180,11 +252,10 @@ namespace P2PWallet.Services.Services
                 var receiverAccount = _dataContext.Accounts.Include("User").Where(x => x.AccountNumber == receipientaccount.AccountNumber).FirstOrDefault();
                 receiverAccount.AccountNumber = receipientaccount.AccountNumber;
                 receiverAccount.Balance = newBalance;
-
                 _dataContext.Accounts.Update(receiverAccount);
                 await _dataContext.SaveChangesAsync();
 
-                var txns = new Transaction()
+                var txns = new Transactions()
                 {
                     SenderId = userAccountNumber.UserId,
                     RecipientId = receiverAccount.UserId,
@@ -198,6 +269,11 @@ namespace P2PWallet.Services.Services
 
                 await _dataContext.Transactions.AddAsync(txns);
                 await _dataContext.SaveChangesAsync();
+
+
+
+                await _notificationService.CreateNotification(receiverAccount.UserId, senderaccount.UserId, userAccountNumber.Currency, amount);
+
 
                 //Debit Info
                 var debit_mail = userAccountNumber.User.Email;
@@ -234,6 +310,15 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public int GetUserId()
+        {
+            int loggedUserId = 0;
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+            return loggedUserId;
+        }
         public async Task<List<TransactionsView>> TransactionsHistory()
         {
             List<TransactionsView> transactions = new List<TransactionsView>();
@@ -1173,81 +1258,45 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
-        public async Task<ServiceResponse<GLAccountView>> CreateGlAccount(GLAccountDTO gLAccount)
-        {
-            var response = new ServiceResponse<GLAccountView>();
-            try
-            {
-                //authenticate the user creating the GL
-
-                //get the parameters from the argument
-                //add the parameters to the gl Table
-
-                string number = DateTime.Now.ToString("yyMMddHHmmssfff");
-
-                var data = new GLAccount()
-                {
-                    GLName = gLAccount.GLName.ToLower(),
-                    Currency = gLAccount.Currency.ToUpper(),
-                    GLNumber = number,
-                    Balance = 0
-                };
-
-                //save the changes
-                await _dataContext.GLAccounts.AddAsync(data);
-                await _dataContext.SaveChangesAsync();
-
-            }
-            catch (Exception ex)
-            {
-                response.Status = false;
-                response.StatusMessage = ex.Message;
-                _logger.LogError($"Error occured.....{ex.Message}");
-            }
-            //return the response 
-            return response;
-
-        }
+    
 
         public ConverterView CurrencyConverter(ConverterDto converterDto)
-        {
-            //get the dto values
-            //perform the computation
-            //var data = new List<ConverterView>();
-            decimal usdToNaira = 774.0558M;
-            decimal eurToNaira = 842.7721M;
-            decimal gbpToNaira = 986.5100M;
+        {        
+            //decimal usdToNaira = 774.0558M;
+            //decimal eurToNaira = 842.7721M;
+            //decimal gbpToNaira = 986.5100M;
             decimal equaivalentNaira = 0;
-            try
+            var rateaccount = _dataContext.CurrenciesWallets.Where(x => x.Currencies.ToLower() ==  converterDto.Currency.ToLower()).FirstOrDefault();
+            if (rateaccount != null)
             {
-                if (converterDto.Currency.ToLower() == "usd")
-                {
-                    equaivalentNaira = usdToNaira * converterDto.Amount;
-                }
-
-                else if (converterDto.Currency.ToLower() == "eur")
-                {
-                    equaivalentNaira = eurToNaira * converterDto.Amount;
-                }
-
-                else if (converterDto.Currency.ToLower() == "gbp")
-                {
-                    equaivalentNaira = gbpToNaira * converterDto.Amount;
-                }
-
-           
+                equaivalentNaira = (decimal)(rateaccount.Rate * converterDto.Amount);
             }
-            catch(Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+
+                //if (converterDto.Currency.ToLower() == "usd")
+                //{
+
+                //    equaivalentNaira = usdToNaira * converterDto.Amount;
+                //}
+
+                //else if (converterDto.Currency.ToLower() == "eur")
+                //{
+                //    equaivalentNaira = eurToNaira * converterDto.Amount;
+                //}
+
+                //else if (converterDto.Currency.ToLower() == "gbp")
+                //{
+                //    equaivalentNaira = gbpToNaira * converterDto.Amount;
+                //}
+                var newdata = new ConverterView()
+                {
+                    Currency = converterDto.Currency,
+                    NairaAmount = equaivalentNaira,
+                    WalletAmount = converterDto.Amount
+                };
+
+      
             //return the values to the user
-            var newdata = new ConverterView()
-            {
-                Currency = converterDto.Currency,
-                NairaAmount = equaivalentNaira,
-                WalletAmount =  converterDto.Amount
-            };
+       
             //data = newdata;
             return newdata;
         }
@@ -1279,7 +1328,7 @@ namespace P2PWallet.Services.Services
                     usernairaaccount.Balance -=  data.NairaAmount;
                     nairaglaccount.Balance += data.NairaAmount;
 
-                    var debittransaction = new Transaction()
+                    var debittransaction = new Transactions()
                     {
                         SenderId = loggeduserId,
                         RecipientId = walletacount.UserId,
@@ -1296,7 +1345,34 @@ namespace P2PWallet.Services.Services
                     dollarglaccount.Balance -= data.WalletAmount;
                     walletacount.Balance += data.WalletAmount;
 
-                    var credittransaction = new Transaction()
+                    var creditglhistory = new GLTransaction()
+                    {
+                        GlId = nairaglaccount.Id,
+                        GlAccount = nairaglaccount.GLNumber,
+                        Currency = nairaglaccount.Currency,
+                        Amount = data.NairaAmount,
+                        Type = "CREDIT",
+                        Reference = ReferenceGenerator(),
+                        Narration = $"{usernairaaccount.User.FirstName} credited  GLWallet with {data.NairaAmount}{nairaglaccount.Currency}." ,
+                        Date = DateTime.Now,
+                    };
+                    await _dataContext.GLTransactions.AddAsync(creditglhistory);
+
+
+                    var debitglhistory = new GLTransaction()
+                    {
+                        GlId = dollarglaccount.Id,
+                        GlAccount = dollarglaccount.GLNumber,
+                        Currency = dollarglaccount.Currency,
+                        Amount = data.WalletAmount,
+                        Type = "DEBIT",
+                        Reference = ReferenceGenerator(),
+                        Narration = $"Credited {walletacount.User.FirstName} {walletacount.Currency} Wallet with {data.WalletAmount}{walletacount.Currency}",
+                        Date = DateTime.Now,
+                    };
+                    await _dataContext.GLTransactions.AddAsync(debitglhistory);
+
+                    var credittransaction = new Transactions()
                     {
                         SenderId = loggeduserId,
                         RecipientId = walletacount.UserId,
@@ -1308,6 +1384,7 @@ namespace P2PWallet.Services.Services
                         DateofTransaction = DateTime.Now
                     };
                     await _dataContext.Transactions.AddAsync(credittransaction);
+
 
                     await _dataContext.SaveChangesAsync();
 
@@ -1346,7 +1423,7 @@ namespace P2PWallet.Services.Services
                                                                 || x.User.Username == foreignTransferDto.AccountSearch
                                                                 || x.User.Email == foreignTransferDto.AccountSearch).FirstOrDefaultAsync();
                         //get the receiver's account
-                        var receiverAcc = await _dataContext.Accounts.Include("User").Where(x => x.UserId == recieverUser.Id && x.Currency == foreignTransferDto.Currency).FirstOrDefaultAsync();
+                        var receiverAcc = await _dataContext.Accounts.Include("User").Where(x => x.UserId == recieverUser.UserId && x.Currency == foreignTransferDto.Currency).FirstOrDefaultAsync();
 
                         //put the checks
                         if (recieverUser == null)
@@ -1386,7 +1463,7 @@ namespace P2PWallet.Services.Services
                         receiverAcc.Balance += foreignTransferDto.Amount;
 
                         // add the transactions to transactions table
-                        var newtransaction = new Transaction()
+                        var newtransaction = new Transactions()
                         {
                             SenderId = loggedInuserAccount.UserId,
                             RecipientId = receiverAcc.UserId,
@@ -1399,7 +1476,47 @@ namespace P2PWallet.Services.Services
                         };
 
                        await _dataContext.Transactions.AddAsync(newtransaction);
-                       await _dataContext.SaveChangesAsync();
+
+                        var notification = new Notification()
+                        {
+                            UserId = receiverAcc.UserId,
+                            NotificationTitle = $"Credit Alert of {receiverAcc.Currency}{foreignTransferDto.Amount}",
+                            NotificationBody = $"{receiverAcc.User.FirstName} {receiverAcc.User.LastName} credited your account with {receiverAcc.Currency}{foreignTransferDto.Amount}",
+                            CreatedDate = DateTime.Now,
+                            Reference = ReferenceGenerator(),
+                            IsRead = false
+                        };
+                        await _dataContext.Notifications.AddAsync(notification);
+                        await _dataContext.SaveChangesAsync();
+                        await _hub.Clients.All.SendAsync("SendNotification", notification);
+
+
+
+                        //Debit Info
+                        var debit_mail = loggedInuserAccount.User.Email;
+                        var debit_Name = loggedInuserAccount.User.Username;
+                        var debit_Amount = foreignTransferDto.Amount;
+                        var debit_Balance = loggedInuserAccount.Balance;
+                        var Dtrantype = "Debit";
+                        var DebitInfo = "has been sent to";
+                        var Ddetails = receiverAcc.User.FirstName + " " + receiverAcc.User.LastName;
+                        var DAcc = receiverAcc.AccountNumber;
+                        var DDate = newtransaction.DateofTransaction;
+
+                        //Credit Info
+                        var credit_mail = receiverAcc.User.Email;
+                        var credit_Name = receiverAcc.User.Username;
+                        var credit_Amount = foreignTransferDto.Amount;
+                        var credit_Balance = receiverAcc.Balance;
+                        var CreditInfo = "was received from";
+                        var Ctrantype = "Credit";
+                        var Cdetails = loggedInuserAccount.User.FirstName + " " + loggedInuserAccount.User.LastName;
+                        var CAcc = loggedInuserAccount.AccountNumber;
+                        var CDate = newtransaction.DateofTransaction;
+
+
+                        await _mailService.SendAsync(debit_mail, debit_Name, Dtrantype, debit_Amount.ToString(), DebitInfo, Ddetails, DAcc, DDate.ToString("yyyy-MM-dd"), debit_Balance.ToString());
+                        await _mailService.SendAsync(credit_mail, credit_Name, Ctrantype, credit_Amount.ToString(), CreditInfo, Cdetails, CAcc, CDate.ToString("yyyy-MM-dd"), credit_Balance.ToString());
 
                         response.Data = "Transaction Successful";
                     }

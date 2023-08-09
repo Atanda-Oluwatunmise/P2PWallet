@@ -123,6 +123,7 @@ namespace P2PWallet.Services.Services
                     LastName = user.LastName,
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
+                    IsLocked = false,
                     Address = user.Address,
                     Password = passwordHash,
                     PasswordKey = passwordKey
@@ -193,7 +194,7 @@ namespace P2PWallet.Services.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 //new Claim("AccountNumber", user.),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, "User")
             };
             // defining a symmetric security key that creates the web token
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -255,6 +256,10 @@ namespace P2PWallet.Services.Services
             try
             {
                 var user = await _dataContext.Users.Include("UserAccount").FirstOrDefaultAsync(x => x.Username == loginreq.Username);
+                if(user.IsLocked ==  true)
+                {
+                    throw new Exception("Cannot log in, account is locked");
+                }
                 if (user == null)
                 {
                     throw new Exception("Username/Password is Incorrect");

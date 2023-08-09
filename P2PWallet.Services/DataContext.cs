@@ -31,7 +31,16 @@ namespace P2PWallet.Services
                 .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<Transaction>(entity =>
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasOne(a => a.UserNotification)
+                .WithMany(b => b.NotificationforUser)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Notification>().ToTable(tb => tb.HasTrigger("NotificationAlert"));
+
+            modelBuilder.Entity<Transactions>(entity =>
             {
                 entity.HasOne(d => d.SenderUser)
                 .WithMany(p => p.UserTransaction)
@@ -51,6 +60,14 @@ namespace P2PWallet.Services
                 entity.HasOne(e => e.DepositUser)
                 .WithMany(f => f.UserDeposit)
                 .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            }); 
+            
+            modelBuilder.Entity<GLTransaction>(entity =>
+            {
+                entity.HasOne(e => e.SystemGL)
+                .WithMany(f => f.GLAccountTransactions)
+                .HasForeignKey(c => c.GlId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
 
@@ -93,21 +110,35 @@ namespace P2PWallet.Services
                 .HasForeignKey<ImageDetail>(c => c.ImageUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
+
+            modelBuilder.Entity <KycDocumentUpload>(entity =>
+            {
+                entity.HasOne(a => a.UserkycDocumentList)
+                .WithMany(b => b.UserKycDocumentUploaded)
+                .HasForeignKey(c => c.DocumentId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
+            });
         }
            public DbSet<Deposit> Deposit { get; set; }
            public DbSet<Pin> Pin { get; set; }
            public DbSet<GLAccount> GLAccounts { get; set; }
            public DbSet<Account> Accounts { get; set; }
            public DbSet<User> Users { get; set; }
-           public DbSet<Transaction> Transactions { get; set; }
+           public DbSet<Transactions> Transactions { get; set; }
            public DbSet<SecurityQuestion> SecurityQuestions { get; set; }
            public DbSet<ResetPassword> ResetPasswords { get; set; }
            public DbSet<ResetPin> ResetPins { get; set; }
+           public DbSet<Notification> Notifications { get; set; }
            public DbSet<ImageDetail> ImageDetails { get; set; }
            public DbSet<CurrenciesWallet> CurrenciesWallets { get; set; }
            public DbSet<WalletCharge> WalletCharges { get; set; }
-
-
-
+           public DbSet<SuperAdmin> SuperAdmins { get; set; }
+           public DbSet<Admin> Admins { get; set; }
+           public DbSet<LockedUser> LockedUsers { get; set; }
+           public DbSet<GLTransaction> GLTransactions { get; set; }
+           public DbSet<KycDocumentUpload> KycDocumentUploads { get; set; }
+           public DbSet<KycDocument> KycDocuments { get; set; }
+           public DbSet<DocumentStatusCode> DocumentStatusCodes { get; set; }
+           public DbSet<PendingUser> PendingUsers { get; set; }      
     }
 }

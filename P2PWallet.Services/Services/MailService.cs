@@ -114,5 +114,18 @@ namespace P2PWallet.Services.Services
                 return false;
             }
         }
+
+        public async Task<bool> SendLoginDetails(string email, string subjectBody, string emailBody, CancellationToken ct = default)
+        {
+            try
+            {
+                await SendMail(email, subjectBody, emailBody, null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
     }
 }

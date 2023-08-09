@@ -16,5 +16,8 @@ namespace P2PWallet.Models.Models.Entities
 
             [Column(TypeName = "decimal(18,2)")]
             public decimal? ChargeAmount { get; set; }
+            
+            [Column(TypeName = "decimal(18,2)")]
+            public decimal? Rate { get; set; }
     }
 }

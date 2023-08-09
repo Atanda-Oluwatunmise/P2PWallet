@@ -8,8 +8,15 @@ using System.Threading.Tasks;
 
 namespace P2PWallet.Models.Models.Entities
 {
+   
     public class GLAccount
     {
+        public GLAccount()
+        {
+            GLAccountTransactions = new HashSet<GLTransaction>();
+        }
+
+
         [Key]
         public int Id { get; set; }
         public string GLName { get; set; } = string.Empty;
@@ -17,5 +24,8 @@ namespace P2PWallet.Models.Models.Entities
         public string Currency { get; set; } = string.Empty;
         [Column(TypeName = "decimal(18,2)")]
         public decimal Balance { get; set; }
+
+        public virtual ICollection<GLTransaction> GLAccountTransactions { get; set; }
+
     }
 }

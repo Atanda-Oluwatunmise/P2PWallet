@@ -70,7 +70,7 @@ namespace P2PWallet.Services.Services
                             useraccount.Balance = useraccount.Balance - chargeamount;
                             _dataContext.SaveChanges();
 
-                            var newtransaction = new Transaction()
+                            var newtransaction = new Transactions()
                             {
                                 SenderId = user.Id,
                                 SenderAccountNumber = useraccount.AccountNumber,

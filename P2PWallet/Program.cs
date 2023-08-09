@@ -27,6 +27,9 @@ using NLog;
 using NLog.Web;
 using TheArtOfDev.HtmlRenderer.PdfSharp;
 using P2PWallet.Services.Services.Seeding;
+using P2PWallet.Services.Hubs;
+using P2PWallet.Services.MiddlewareExtensions;
+using P2PWallet.Services.SubscribeTableDependencies;
 //using FluentValidation.AspNetCore;
 //using System.Reflection;
 var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
@@ -56,6 +59,8 @@ try
     builder.Services.AddTransient<IValidator<PinDto>, CreatePinValidator>();
     builder.Services.AddTransient<IValidator<EditViewModel>, EditDetailValidator>();
     builder.Services.AddTransient<IValidator<SecurityQuestionDto>, SecurityQuestionValidator>();
+    builder.Services.AddTransient<IValidator<LockingUserDto>, LockingUserValidator>();
+    builder.Services.AddTransient<IValidator<ResetPasswordDto>, ResetPasswordDtoValidator>();
 
     builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
@@ -77,16 +82,22 @@ try
     builder.Services.AddScoped<ITransactionService, TransactionService>();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IPaymentService, PaymentService>();
+    builder.Services.AddScoped<IKycProcessService, KycProcessService>();
+    builder.Services.AddScoped<IAdminService, AdminService>();
+    builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ILoggerManager, LoggerManager>();
     builder.Services.AddScoped<IMailService, MailService>();
     builder.Services.AddScoped<IMultipleWallets, MultipleWallets>();
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+    builder.Services.AddSingleton<INotificationHub, NotificationHub>();
+    //builder.Services.AddSingleton<SubscribeTransactionsTable>();
 
     builder.Services.Configure<DataProtectionTokenProviderOptions>(opts => opts.TokenLifespan = TimeSpan.FromHours(10));
     var emailConfig = builder.Configuration.GetSection("EmailConfiguration").Get<EmailConfiguration>();
     builder.Services.AddSingleton(emailConfig);
+    builder.Services.AddSignalR();
+;
 
 
 
@@ -103,6 +114,7 @@ try
             };
         });
 
+
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
@@ -117,7 +129,7 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:58067").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 
     app.UseAuthentication();
 
@@ -125,7 +137,13 @@ try
 
     app.MapControllers();
 
+    app.MapHub<NotificationHub>("/notify");
+    //subscribetable dependency using middleware
+
+    //ApplicationBuilderExtension.UserTransactionTableDependency(app);
+
     SeedingService.DataSeeding(app);
+    SeedingService.AdminSeeding(app);
 
     app.Run();
 }

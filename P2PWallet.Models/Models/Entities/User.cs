@@ -14,14 +14,15 @@ namespace P2PWallet.Models.Models.Entities
         public User()
         {
             UserAccount = new HashSet<Account>();
-            UserTransaction = new HashSet<Transaction>();
-            ReceiverTransaction = new HashSet<Transaction>();
+            UserTransaction = new HashSet<Transactions>();
+            ReceiverTransaction = new HashSet<Transactions>();
             UserDeposit = new HashSet<Deposit>();
             UserSecurityQuestion = new HashSet<SecurityQuestion>();
             UserResetPassword = new HashSet<ResetPassword>();
             UserResetPin = new HashSet<ResetPin>();
             Userpin = new HashSet<Pin>();
             UserWalletCharge = new HashSet<WalletCharge>();
+            NotificationforUser = new HashSet<Notification>();
 
         }
 
@@ -38,6 +39,8 @@ namespace P2PWallet.Models.Models.Entities
         public string? VerificationToken { get; set; } = string.Empty;
         public string? UserToken { get; set; } = string.Empty;
         public string? RefreshToken { get; set; } = string.Empty;
+        public bool? IsLocked { get; set; }
+        public bool? KycVerified { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public DateTime? UserVerifiedAt { get; set; }
 
@@ -45,13 +48,15 @@ namespace P2PWallet.Models.Models.Entities
         public virtual ICollection<Account> UserAccount { get; set; }
         public virtual ImageDetail UserImageDetail { get; set; }
         public virtual ICollection<WalletCharge> UserWalletCharge { get; set; }
-        public virtual ICollection<Transaction> UserTransaction { get; set; }
-        public virtual ICollection<Transaction> ReceiverTransaction { get; set; }
+        public virtual ICollection<Transactions> UserTransaction { get; set; }
+        public virtual ICollection<Transactions> ReceiverTransaction { get; set; }
         public virtual ICollection<Deposit> UserDeposit { get; set; }
         public virtual ICollection<SecurityQuestion> UserSecurityQuestion { get; set; }
         public virtual ICollection<ResetPassword> UserResetPassword { get; set; }
         public virtual ICollection<ResetPin> UserResetPin { get; set; }
         public virtual ICollection<Pin> Userpin { get; set; }
+        public virtual ICollection<Notification> NotificationforUser { get; set; }
+        //public virtual ICollection <KycDocumentUpload> UsersKycDocument { get; set; }
         
         //public virtual Pin Userpin { get; set; }
 

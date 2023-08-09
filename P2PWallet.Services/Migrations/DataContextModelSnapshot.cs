@@ -51,6 +51,44 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("Accounts");
                 });
 
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Admin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Disabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("Password")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<bool>("PasswordChanged")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("PasswordKey")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("UserToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Admins");
+                });
+
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.CurrenciesWallet", b =>
                 {
                     b.Property<int>("Id")
@@ -64,6 +102,9 @@ namespace P2PWallet.Services.Migrations
 
                     b.Property<string>("Currencies")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("Rate")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -126,6 +167,26 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("Deposit");
                 });
 
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.DocumentStatusCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusMessage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DocumentStatusCodes");
+                });
+
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLAccount", b =>
                 {
                     b.Property<int>("Id")
@@ -134,7 +195,7 @@ namespace P2PWallet.Services.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("Balance")
+                    b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Currency")
@@ -152,6 +213,45 @@ namespace P2PWallet.Services.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GLAccounts");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GlAccount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GlId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Narration")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlId");
+
+                    b.ToTable("GLTransactions");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
@@ -179,6 +279,150 @@ namespace P2PWallet.Services.Migrations
                         .IsUnique();
 
                     b.ToTable("ImageDetails");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.KycDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DocumentName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KycDocuments");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.KycDocumentUpload", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DocumentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.ToTable("KycDocumentUploads");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.LockedUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountTier")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LockingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("No_of_Accounts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LockedUsers");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NotificationBody")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NotificationTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SenderUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications", t =>
+                        {
+                            t.HasTrigger("NotificationAlert");
+                        });
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.PendingUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Pending")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PendingUsers");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
@@ -291,7 +535,35 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("SecurityQuestions");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.SuperAdmin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("Password")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<byte[]>("PasswordKey")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("UserToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SuperAdmins");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transactions", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -350,6 +622,12 @@ namespace P2PWallet.Services.Migrations
 
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsLocked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("KycVerified")
+                        .HasColumnType("bit");
 
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
@@ -431,6 +709,16 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("DepositUser");
                 });
 
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLTransaction", b =>
+                {
+                    b.HasOne("P2PWallet.Models.Models.Entities.GLAccount", "SystemGL")
+                        .WithMany("GLAccountTransactions")
+                        .HasForeignKey("GlId")
+                        .IsRequired();
+
+                    b.Navigation("SystemGL");
+                });
+
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.ImageDetail", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "UserImage")
@@ -439,6 +727,27 @@ namespace P2PWallet.Services.Migrations
                         .IsRequired();
 
                     b.Navigation("UserImage");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.KycDocumentUpload", b =>
+                {
+                    b.HasOne("P2PWallet.Models.Models.Entities.KycDocument", "UserkycDocumentList")
+                        .WithMany("UserKycDocumentUploaded")
+                        .HasForeignKey("DocumentId")
+                        .IsRequired();
+
+                    b.Navigation("UserkycDocumentList");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("P2PWallet.Models.Models.Entities.User", "UserNotification")
+                        .WithMany("NotificationforUser")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserNotification");
                 });
 
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.Pin", b =>
@@ -481,7 +790,7 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("UserSecurity");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transaction", b =>
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.Transactions", b =>
                 {
                     b.HasOne("P2PWallet.Models.Models.Entities.User", "ReceiverUser")
                         .WithMany("ReceiverTransaction")
@@ -506,8 +815,20 @@ namespace P2PWallet.Services.Migrations
                     b.Navigation("UserWalletCharge");
                 });
 
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.GLAccount", b =>
+                {
+                    b.Navigation("GLAccountTransactions");
+                });
+
+            modelBuilder.Entity("P2PWallet.Models.Models.Entities.KycDocument", b =>
+                {
+                    b.Navigation("UserKycDocumentUploaded");
+                });
+
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.User", b =>
                 {
+                    b.Navigation("NotificationforUser");
+
                     b.Navigation("ReceiverTransaction");
 
                     b.Navigation("UserAccount");

@@ -78,12 +78,6 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpPost("creategl")]
-        public async Task<ServiceResponse<GLAccountView>> CreateGlAccount(GLAccountDTO gLAccount)
-        {
-            var result = await _transactionService.CreateGlAccount(gLAccount);
-            return result;
-        }
 
         [HttpPost("convertcurrency"), Authorize]
         public ConverterView CurrencyConverter(ConverterDto converterDto)

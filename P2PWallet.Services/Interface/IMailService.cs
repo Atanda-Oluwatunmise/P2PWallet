@@ -9,6 +9,7 @@ namespace P2PWallet.Services.Interface
         public Task<bool> SendAsync(string emailAdd, string name, string transtype, string amountt, string info, string details,  string acnt, string date, string balance, CancellationToken ct = default);
         public Task<bool> ResetPasswordEmailAsync(string email, string subjectBody, string emailbody, string emailbodyy, CancellationToken ct = default);
         public Task<bool> SendStatementToEmail(string email, string subjectBody, string emailBody, IFormFile formFile, CancellationToken ct = default);
+        public Task<bool> SendLoginDetails(string email, string subjectBody, string emailBody, CancellationToken ct = default);
 
 
     }
