@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using Aspose.Pdf.Operators;
+using Dapper;
 using DinkToPdf.Contracts;
 using MailKit;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using NPOI.HPSF;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
 using P2PWallet.Services.Hubs;
@@ -17,6 +19,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -149,11 +153,12 @@ namespace P2PWallet.Services.Services
             return notification;
         }
 
-        public async Task SendKycNotifications(string name, string message)
+        public async Task SendKycNotifications(string name, string message, string reason)
         {
             try
             {
-                await _hub.Clients.All.SendAsync("UserKycNotification", name, message);
+                var textinfo = CultureInfo.CurrentCulture.TextInfo;
+                await _hub.Clients.All.SendAsync("UserKycNotification", name, textinfo.ToTitleCase(message), reason);
             }
             catch (Exception ex)
             {
@@ -186,6 +191,73 @@ namespace P2PWallet.Services.Services
             }
         }
 
+        public async Task CreateVerifiedUserKycNotification(int UserId, string Username)
+        {
+            try
+            {
+                var userDetail = await _dataContext.Users.Where(x => x.Id == UserId).FirstOrDefaultAsync();
+                if (userDetail != null)
+                {
+                    var notification = new Notification()
+                    {
+                        UserId = userDetail.Id,
+                        NotificationTitle = $"User is Kyc verified",
+                        NotificationBody = $"Hi {Username}, your account has been verified!.",
+                        CreatedDate = DateTime.Now,
+                        //Reference = ReferenceGenerator(),
+                        IsRead = false
+                    };
+
+                    var notificationExist = await _dataContext.Notifications.Where(x => x.UserId == UserId && x.NotificationBody.ToLower() == notification.NotificationBody).FirstOrDefaultAsync();
+                    if (notificationExist == null)
+                    {
+                        await _dataContext.Notifications.AddAsync(notification);
+                        await _dataContext.SaveChangesAsync();
+                        _logger.LogInformation($"{userDetail.Username} account is kyc verified!");
+                    }
+                    else
+                    {
+                        return;
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An Error Occurred...{ex.Message}");
+            }
+        }
+
+        public async Task CreateKycNotification(int UserId, string Username, string Filename, string Reason)
+        {
+            try
+            {
+                var userDetail = await _dataContext.Users.Where(x => x.Id == UserId).FirstOrDefaultAsync();
+                if (userDetail != null)
+                {
+                    var notification = new Notification()
+                    {
+                        UserId = userDetail.Id,
+                        NotificationTitle = $"Kyc document was rejected",
+                        NotificationBody = $"{Filename} document was rejected by Admin; Reason: {Reason}.",
+                        CreatedDate = DateTime.Now,
+                        //Reference = ReferenceGenerator(),
+                        IsRead = false
+                    };
+                    await _dataContext.Notifications.AddAsync(notification);
+                    await _dataContext.SaveChangesAsync();
+                    await SendKycNotifications(Username, Filename, Reason);
+                    _logger.LogInformation($"{userDetail.Username} kyc document has been rejected");
+
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"An Error Occurred...{ex.Message}");
+            }
+        }
+
         public async Task CreateLockedUserNotification(int UserId)
         {
             try
@@ -198,6 +270,7 @@ namespace P2PWallet.Services.Services
                         UserId = userDetail.Id,
                         NotificationTitle = $"Account is Locked",
                         CreatedDate = DateTime.Now,
+                        //Reference = ReferenceGenerator(),
                         IsRead = true
                     };
                     await _dataContext.Notifications.AddAsync(notification);
@@ -207,9 +280,9 @@ namespace P2PWallet.Services.Services
 
                 }
             }
-            catch
+            catch(Exception ex) 
             {
-
+                _logger.LogError($"An Error Occurred...{ex.Message}");
             }
         }
         public async Task CreateNotification(int ReceiverId, int SenderId, string Currency, decimal Amount)
@@ -302,6 +375,7 @@ namespace P2PWallet.Services.Services
                             var data = new NotificationView
                             {
                                 Message = a.NotificationTitle,
+                                NotificationBody = a.NotificationBody,
                                 Reference = a.Reference
                             };
                             notificationList.Add(data);
@@ -319,6 +393,31 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public async Task<ServiceResponse<string>> SetNonTrasactionsNoitficationsToTrue(MessageDto messageDto)
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var userAcc = await _dataContext.Users.Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
+
+                    var notification = await _dataContext.Notifications.Where(x => x.UserId == loggedUserId && x.NotificationBody.ToLower() == messageDto.Message.ToLower()).FirstOrDefaultAsync();
+                    if (notification != null)
+                    {
+                        notification.IsRead = true;
+                        await _dataContext.SaveChangesAsync();
+                        _logger.LogInformation($"{notification.NotificationBody} notifocation has been read");
+                    }
+                }
+            }
+            catch
+            {
+                response.Status = false;
+            }
+            return response;
+        }
 
     }
 }

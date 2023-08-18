@@ -19,7 +19,11 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<NotificationDto>> RetrieveNotificationdetail(RetirieveNotificationDto retirieveNotificationDto);
         public Task<ServiceResponse<List<NotificationView>>> UnreadNotifications();
         public Task CreateLockedUserNotification(int UserId);
-        public Task SendKycNotifications(string name, string message);
+        public Task SendKycNotifications(string name, string message, string reason);
+        public Task CreateKycNotification(int UserId, string Username, string Filename, string Reason);
+        public Task<ServiceResponse<string>> SetNonTrasactionsNoitficationsToTrue(MessageDto messageDto);
+        public Task CreateVerifiedUserKycNotification(int UserId, string Username);
+
 
 
 

@@ -30,6 +30,13 @@ namespace P2PWallet.Api.Controllers
         {
             var result = await _kycProcessService.GetDocumentsRequired();
             return result;
+        } 
+        
+        [HttpGet("unuploadeddocs"), Authorize]
+        public async Task<ServiceResponse<List<KycDocumentsView>>> ListsofUnUploadedandRejectedDocuments()
+        {
+            var result = await _kycProcessService.ListsofUnUploadedandRejectedDocuments();
+            return result;
         }
 
         [HttpPost("uploadkycdocument"), Authorize]
@@ -47,7 +54,7 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPost("getuserkycdetail"), Authorize]
-        public async Task<ServiceResponse<List<KycUserDetails>>> GetKycDetailsForUser(KycDocumentsView kycDocumentsView)
+        public async Task<ServiceResponse<List<KycUserDetails>>> GetKycDetailsForUser(NewKycDocumentsView kycDocumentsView)
         {
             var result = await _kycProcessService.GetKycDetailsForUser(kycDocumentsView);
             return result;
@@ -60,10 +67,10 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpPost("rejectdocument"), Authorize]
-        public async Task<ServiceResponse<string>> RejectDocument(KycDocumentsView kycDocumentsView)
+        [HttpPost("rejectdocument"), Authorize] 
+        public async Task<ServiceResponse<string>> RejectDocument(RejectDocsDto rejectDocsDto)
         {
-            var result = await _kycProcessService.RejectDocument(kycDocumentsView);
+            var result = await _kycProcessService.RejectDocument(rejectDocsDto);
             return result;
         }
 
@@ -73,6 +80,7 @@ namespace P2PWallet.Api.Controllers
             var result = await _kycProcessService.UpgradeUserAccount();
             return result;
         }
+
 
 
     }

@@ -33,5 +33,12 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpPost("setnotificationtotrue"), Authorize]
+        public async Task<ServiceResponse<string>> SetNonTrasactionsNoitficationsToTrue(MessageDto messageDto)
+        {
+            var result = await _notificationService.SetNonTrasactionsNoitficationsToTrue(messageDto);
+            return result;
+        }
+
     }
 }

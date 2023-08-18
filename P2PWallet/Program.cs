@@ -91,6 +91,7 @@ try
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddDbContext<DataContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
     builder.Services.AddSingleton<INotificationHub, NotificationHub>();
+    builder.Services.AddSingleton<TimerService>();
     //builder.Services.AddSingleton<SubscribeTransactionsTable>();
 
     builder.Services.Configure<DataProtectionTokenProviderOptions>(opts => opts.TokenLifespan = TimeSpan.FromHours(10));
@@ -129,7 +130,7 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:58067").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:65408").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 
     app.UseAuthentication();
 

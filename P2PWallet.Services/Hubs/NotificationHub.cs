@@ -28,46 +28,37 @@ namespace P2PWallet.Services.Hubs
         public static User user = new User();
         private Microsoft.AspNetCore.SignalR.Client.HubConnection hubConnection;
         private readonly IConfiguration _configuration;
-       // private readonly INotificationService _notificationService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        //private readonly TransactionService transactionService;
+        private readonly TimerService _timerService;
 
-        public NotificationHub(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public NotificationHub(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, TimerService timerService)
         {
             _configuration = configuration;
-            //_notificationService = notificationService;
             _httpContextAccessor = httpContextAccessor;
-            //notificationService = new NotificationService(configuration);
+            _timerService = timerService;
         }
 
-   
-            public async Task SendTransactionNotification()
+        public async Task SendTransactionNotification()
         {
-            //var details = _notificationService.GetTransactions();
             await Clients.Caller.SendAsync("TestData");
-            //await Clients.All.
         }
 
         public async Task SendAlert()
         {
-            //var result = string.Empty;
-            //if (_httpContextAccessor.HttpContext != null)
-            //{
-            //    result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //}
-            //return result;
-
-            //var httpContext = Context.GetHttpContext();
-            //var connectionId = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-            //int userId = Convert.ToInt32(connectionId);
-            //bool isRead = false;
-            ////get my loggedin Id
-            //// get unread notifications 
-            //var details = _notificationService.AlertNotifications(userId, isRead);
-            ////string details = "list of unread notifications";
             await Clients.All.SendAsync("TransactionsData", "Hello People");
-            //await Clients.All.
         }
 
+        public async Task SendMessage(string Username, string Message)
+        {
+            await Clients.All.SendAsync("ReceiveMessage", Username, Message, DateTime.Now);
+        }
+
+        public async Task SendChartData()
+        {
+            await Clients.All.SendAsync("TransferChartData", "transactionsdata");
+            //if (!_timerService.IsTimerStarted)
+            //  _timerService.PrepareTimer(() => Clients.All.SendAsync("TransferChartData", DataManager.GetData()));
+
+        }
     }
 }

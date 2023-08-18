@@ -1080,10 +1080,6 @@ namespace P2PWallet.Services.Services
             //Automatically adjust the image size
             picture.Resize(2.0, 2.0);
 
-
-
-
-
             var header = sheet.CreateRow(4);
                 header.CreateCell(0).SetCellValue("SenderInfo");
                 header.CreateCell(1).SetCellValue("Currency");
@@ -1104,9 +1100,6 @@ namespace P2PWallet.Services.Services
                     row.CreateCell(5).SetCellValue(item.DateofTransaction.ToString("dd-MM-yyyy hh:mm:ss tt"));
                 rowindex++;
                 }
-
-
-
 
             //Create style
             NPOI.XSSF.UserModel.XSSFCellStyle style = (NPOI.XSSF.UserModel.XSSFCellStyle)workbook.CreateCellStyle();
@@ -1320,6 +1313,7 @@ namespace P2PWallet.Services.Services
                     {
                         throw new Exception("Foreign Account does not exist");
                     }
+                   
                     if (usernairaaccount.Balance < data.NairaAmount)
                     {
                         throw new Exception("Insufficient Balance");
@@ -1413,6 +1407,12 @@ namespace P2PWallet.Services.Services
                     //verify the user logged in
                     var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
+                    var useraccount = await _dataContext.Users.Include("UserAccount").Where(x => x.Id == loggedUserId && x.KycVerified == true).FirstOrDefaultAsync();
+
+                    if (useraccount == null)
+                    {
+                        throw new Exception("User is not Kyc verified, please upgrade your account.");
+                    }
                     //get access to the accounts table  //get the sender account
                     var loggedInuserAccount = await _dataContext.Accounts.Include("User").Where(x => x.UserId == loggedUserId && x.Currency == foreignTransferDto.Currency).FirstOrDefaultAsync();
 
@@ -1475,20 +1475,24 @@ namespace P2PWallet.Services.Services
                             DateofTransaction = DateTime.Now
                         };
 
-                       await _dataContext.Transactions.AddAsync(newtransaction);
-
-                        var notification = new Notification()
-                        {
-                            UserId = receiverAcc.UserId,
-                            NotificationTitle = $"Credit Alert of {receiverAcc.Currency}{foreignTransferDto.Amount}",
-                            NotificationBody = $"{receiverAcc.User.FirstName} {receiverAcc.User.LastName} credited your account with {receiverAcc.Currency}{foreignTransferDto.Amount}",
-                            CreatedDate = DateTime.Now,
-                            Reference = ReferenceGenerator(),
-                            IsRead = false
-                        };
-                        await _dataContext.Notifications.AddAsync(notification);
+                        await _dataContext.Transactions.AddAsync(newtransaction);
                         await _dataContext.SaveChangesAsync();
-                        await _hub.Clients.All.SendAsync("SendNotification", notification);
+
+                        await _notificationService.CreateNotification(receiverAcc.UserId, loggedInuserAccount.UserId, receiverAcc.Currency, foreignTransferDto.Amount);
+                        //var notification = new Notification()
+                        //{
+                        //    UserId = receiverAcc.UserId,
+                        //    SenderUserId = loggedInuserAccount.UserId,
+                        //    Amount = foreignTransferDto.Amount,
+                        //    Currency = 
+                        //    NotificationTitle = $"Credit Alert of {receiverAcc.Currency}{foreignTransferDto.Amount}",
+                        //    NotificationBody = $"{receiverAcc.User.FirstName} {receiverAcc.User.LastName} credited your account with {receiverAcc.Currency}{foreignTransferDto.Amount}",
+                        //    CreatedDate = DateTime.Now,
+                        //    Reference = ReferenceGenerator(),
+                        //    IsRead = false
+                        //};
+                        //await _dataContext.Notifications.AddAsync(notification);
+                        //await _dataContext.SaveChangesAsync();
 
 
 

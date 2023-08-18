@@ -18,7 +18,7 @@ namespace P2PWallet.Models.Models.Entities
         public int UserId { get; set; }
         public string FileName { get; set; }
         public int Status { get; set; }
-
+        public string? ReasonForRejection { get; set; } = string.Empty;
         public virtual KycDocument UserkycDocumentList { get; set; }
         //public virtual User KycUsers { get; set; }
     }

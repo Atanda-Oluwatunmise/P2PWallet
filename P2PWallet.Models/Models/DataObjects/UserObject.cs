@@ -504,6 +504,7 @@ namespace P2PWallet.Models.Models.DataObjects
     public class NotificationView
     {
         public string Message { get; set; }
+        public string NotificationBody { get; set; }
         public string Reference { get; set; }
     }
 
@@ -526,7 +527,31 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class KycDocumentsView
     {
+        public string Username { get; set; }
         public string Name { get; set; }
+    } 
+    
+    public class NewKycDocumentsView
+    {
+        public string Name { get; set; }
+    }
+
+    public class MessageDto
+    {
+        public string Message { get; set; }
+    }
+
+    public class RejectDocsDto 
+    {
+        public string Username { get; set; }
+        public string Name { get; set; }
+        public string Reason { get; set; }
+    }
+
+    public class KycDocs
+    {
+        public string Name { get; set; }
+        public int Status { get; set; }
     }
 
     public class PendingUsersView

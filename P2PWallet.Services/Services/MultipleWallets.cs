@@ -39,13 +39,18 @@ namespace P2PWallet.Services.Services
                 if (_httpContextAccessor.HttpContext != null)
                 {
                     var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
-                    var user = await _dataContext.Users.Include("UserAccount").Include("UserWalletCharge").Where(x => x.Id == loggeduserId).FirstOrDefaultAsync();
+                    var user = await _dataContext.Users.Include("UserAccount").Include("UserWalletCharge").Where(x => x.Id == loggeduserId && x.KycVerified == true).FirstOrDefaultAsync();
                     var useraccount = await _dataContext.Accounts.Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
                     var userwalletcharge = await _dataContext.WalletCharges.Include("UserWalletCharge").Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
                     var currenciesList = await _dataContext.CurrenciesWallets.Where(x => x.Currencies == currencyObj.Currency).FirstOrDefaultAsync();
 
                     decimal chargeamount = (decimal)currenciesList.ChargeAmount;
                     decimal newBalance = 0;
+
+                    if (user == null)
+                    {
+                        throw new Exception("Cannot create foreign wallets, account is not upgraded.");
+                    }
 
                     if (user.UserAccount.Count() >= 4) 
                     {

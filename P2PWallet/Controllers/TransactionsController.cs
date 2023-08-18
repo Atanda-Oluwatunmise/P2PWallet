@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
+using P2PWallet.Services.Hubs;
 using P2PWallet.Services.Interface;
 using P2PWallet.Services.Migrations;
 using P2PWallet.Services.Services;
@@ -15,11 +17,15 @@ namespace P2PWallet.Api.Controllers
 
         private readonly DataContext _dataContext;
         private readonly ITransactionService _transactionService;
-        public TransactionsController(DataContext dataContext, ITransactionService transactionService)
+        private readonly TimerService _timerService;
+        private readonly IHubContext<NotificationHub> _hub;
+
+        public TransactionsController(DataContext dataContext, ITransactionService transactionService, TimerService timerService, IHubContext<NotificationHub> hub)
         {
             _dataContext = dataContext;
             _transactionService = transactionService;
-
+            _timerService = timerService;
+            _hub = hub;
         }
 
         [HttpPut("transfers"), Authorize]
@@ -98,6 +104,14 @@ namespace P2PWallet.Api.Controllers
         {
             var result = await _transactionService.ForeignTransfers(foreignTransferDto);
             return result;
+        }
+
+        [HttpGet("getchartdata"), Authorize]
+        public IActionResult Get()
+        {
+            if (!_timerService.IsTimerStarted)
+                _timerService.PrepareTimer(() => _hub.Clients.All.SendAsync("TransferChartData", DataManager.GetData()));
+            return Ok(new { Message = "Request Completed" });
         }
 
     }
