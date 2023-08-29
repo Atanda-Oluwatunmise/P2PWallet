@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using P2PWallet.Models.Models.Entities;
 
 namespace P2PWallet.Models.Models.DataObjects
 {
@@ -71,6 +72,11 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string AccountSearch { get; set; } = string.Empty;
         public decimal Amount { get; set; }
+    } 
+    
+    public class SearchDto
+    {
+        public string UserSearch { get; set; } = string.Empty;
     }
 
     public class UserSearchDto
@@ -109,6 +115,12 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string AccountName { get; set; } = string.Empty;
         public string AccountNumber { get; set; } = string.Empty;
+    }
+    
+    public class UsersCount
+    {
+        public int LockedUsers { get; set; } 
+        public int UnlockedUsers { get; set; }
     }
 
     
@@ -231,6 +243,12 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string Email { get; set; }
     }
+    
+    public class OtpDto
+    {
+        public string Email { get; set; }
+        public string Otp { get; set; }
+    }
 
     public class ChangePinValidator : AbstractValidator<ChangePinDto>
     {
@@ -330,6 +348,12 @@ namespace P2PWallet.Models.Models.DataObjects
     public class DisplayViewmodel
     {
         public byte[] ImagePath { get; set; }
+    } 
+    
+    public class SearchUserViewmodel
+    {
+        public string Username { get; set; }
+        public byte[]? ImagePath { get; set; }
     }
 
     public class SecurityViewModel
@@ -503,6 +527,7 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class NotificationView
     {
+        public int Id { get; set; }
         public string Message { get; set; }
         public string NotificationBody { get; set; }
         public string Reference { get; set; }
@@ -538,6 +563,7 @@ namespace P2PWallet.Models.Models.DataObjects
 
     public class MessageDto
     {
+        public int Id { get; set; }
         public string Message { get; set; }
     }
 
@@ -564,5 +590,34 @@ namespace P2PWallet.Models.Models.DataObjects
         public byte[] ImagePath { get; set; }
         public string ImageName { get; set; }
         
+    }
+
+    public class TxnsView
+    {
+        //public List<DateTime> DateofTxn { get; set; }
+        public List<Transactions> NgnTxn { get; set; }
+        public List<Transactions> UsdTxn { get; set; }
+        public List<Transactions> EurTxn { get; set; }
+    }
+
+    public class ChatDto
+    {
+        public string Username { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class ChatView
+    {
+        public string? SenderUserName { get; set; }
+        public string? ReceiverUserName { get; set; }
+        public string Chat { get; set; }
+        public string ChatsDate { get; set; }
+        public DateTime Date { get; set; }
+    }
+
+    public class GetMessagesDto
+    {
+        public string? SenderUserName { get; set; }
+        public string? ReceiverUserName { get; set; }
     }
 }

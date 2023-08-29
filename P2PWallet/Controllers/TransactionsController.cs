@@ -106,13 +106,14 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        [HttpGet("getchartdata"), Authorize]
-        public IActionResult Get()
+        [HttpGet("gettxnsrecord"), Authorize]
+        public async Task<ServiceResponse<TxnsView>> TotalTransactions()
         {
-            if (!_timerService.IsTimerStarted)
-                _timerService.PrepareTimer(() => _hub.Clients.All.SendAsync("TransferChartData", DataManager.GetData()));
-            return Ok(new { Message = "Request Completed" });
+            var result = await _transactionService.TotalTransactions();
+            return result;
         }
+
+
 
     }
 }

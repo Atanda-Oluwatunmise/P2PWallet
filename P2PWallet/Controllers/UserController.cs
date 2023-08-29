@@ -109,6 +109,14 @@ namespace P2PWallet.Api.Controllers
             var result = await _multipleWallets.VerifyAccount(currencyObj);
             return result;
         }
+
+        [HttpGet("lockedandunlockedusers"), Authorize]
+        public async Task<ServiceResponse<UsersCount>> LockedandUnlockedUsers()
+        {
+            var result = await _userServices.LockedandUnlockedUsers();
+            return result;
+        }
+
         //[HttpGet("verifyimagestatus"), Authorize]
         //public async Task<bool> VerifyImageStatus()
         //{

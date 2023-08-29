@@ -30,12 +30,14 @@ namespace P2PWallet.Services.Hubs
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly TimerService _timerService;
+        //private readonly DataContext _dataContext;
 
         public NotificationHub(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, TimerService timerService)
         {
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
             _timerService = timerService;
+            //_dataContext = dataContext;
         }
 
         public async Task SendTransactionNotification()
@@ -48,13 +50,27 @@ namespace P2PWallet.Services.Hubs
             await Clients.All.SendAsync("TransactionsData", "Hello People");
         }
 
-        public async Task SendMessage(string Username, string Message)
-        {
-            await Clients.All.SendAsync("ReceiveMessage", Username, Message, DateTime.Now);
-        }
+        //public async Task SendMessage(string Username, string Message)
+        //{
+        //    var chatdate = DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss tt");
+        //    await Clients.All.SendAsync("ReceiveMessage", Username, Message, chatdate);
+            
+        //    //var user
+        //    //var data = new Chat()
+        //    //{
+        //    //    SenderUserId =,
+        //    //    ReceiverUserId =,
+        //    //    SenderUsername = ,
+        //    //    ReceiverUsername = ,
+        //    //    Message = ,
+        //    //    DateofChat = ,
+        //    //}
+        //    //_dataContext.Chats.
+        //}
 
         public async Task SendChartData()
         {
+            
             await Clients.All.SendAsync("TransferChartData", "transactionsdata");
             //if (!_timerService.IsTimerStarted)
             //  _timerService.PrepareTimer(() => Clients.All.SendAsync("TransferChartData", DataManager.GetData()));

@@ -83,6 +83,7 @@ try
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<IPaymentService, PaymentService>();
     builder.Services.AddScoped<IKycProcessService, KycProcessService>();
+    builder.Services.AddScoped<IChatService, ChatService>();
     builder.Services.AddScoped<IAdminService, AdminService>();
     builder.Services.AddScoped<INotificationService, NotificationService>();
     builder.Services.AddScoped<ILoggerManager, LoggerManager>();
@@ -130,7 +131,7 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:65408").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:63938").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 
     app.UseAuthentication();
 

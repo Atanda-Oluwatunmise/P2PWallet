@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using P2PWallet.Services;
 
@@ -11,9 +12,11 @@ using P2PWallet.Services;
 namespace P2PWallet.Services.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20230822092521_addChatsTable")]
+    partial class addChatsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -575,30 +578,6 @@ namespace P2PWallet.Services.Migrations
                     b.ToTable("SecurityQuestions");
                 });
 
-            modelBuilder.Entity("P2PWallet.Models.Models.Entities.StartedChat", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("HasStarted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ReceivedChatFrom")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StartedChatWith")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("StartedChats");
-                });
-
             modelBuilder.Entity("P2PWallet.Models.Models.Entities.SuperAdmin", b =>
                 {
                     b.Property<int>("Id")
@@ -710,9 +689,6 @@ namespace P2PWallet.Services.Migrations
 
                     b.Property<DateTime?>("RefreshTokenExpiryTime")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("UserOtp")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserToken")
                         .HasColumnType("nvarchar(max)");

@@ -10,7 +10,7 @@ namespace P2PWallet.Services.Interface
     {
         Task SendTransactionNotification();
         Task SendAlert();
-        Task SendMessage(string Username, string Message);
+        //Task SendMessage(string Username, string Message);
         Task SendChartData();
 
     }

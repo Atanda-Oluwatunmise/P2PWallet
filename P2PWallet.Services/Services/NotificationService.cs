@@ -234,7 +234,8 @@ namespace P2PWallet.Services.Services
             try
             {
                 var userDetail = await _dataContext.Users.Where(x => x.Id == UserId).FirstOrDefaultAsync();
-                if (userDetail != null)
+
+                if (userDetail != null && Reason != null)
                 {
                     var notification = new Notification()
                     {
@@ -251,6 +252,24 @@ namespace P2PWallet.Services.Services
                     _logger.LogInformation($"{userDetail.Username} kyc document has been rejected");
 
                 }
+
+                if (userDetail != null && Reason == null)
+                {
+                    var notification = new Notification()
+                    {
+                        UserId = userDetail.Id,
+                        NotificationTitle = $"Kyc document has been approved",
+                        NotificationBody = $"{Filename} document has been approved by the Admin.",
+                        CreatedDate = DateTime.Now,
+                        //Reference = ReferenceGenerator(),
+                        IsRead = false
+                    };
+                    await _dataContext.Notifications.AddAsync(notification);
+                    await _dataContext.SaveChangesAsync();
+                    await SendKycNotifications(Username, Filename, Reason);
+                    _logger.LogInformation($"{userDetail.Username} kyc document has been approved");
+                }
+
             }
             catch (Exception ex)
             {
@@ -374,6 +393,7 @@ namespace P2PWallet.Services.Services
                         {
                             var data = new NotificationView
                             {
+                                Id =  a.Id,
                                 Message = a.NotificationTitle,
                                 NotificationBody = a.NotificationBody,
                                 Reference = a.Reference
@@ -403,7 +423,7 @@ namespace P2PWallet.Services.Services
                     var loggedUserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                     var userAcc = await _dataContext.Users.Where(x => x.Id == loggedUserId).FirstOrDefaultAsync();
 
-                    var notification = await _dataContext.Notifications.Where(x => x.UserId == loggedUserId && x.NotificationBody.ToLower() == messageDto.Message.ToLower()).FirstOrDefaultAsync();
+                    var notification = await _dataContext.Notifications.Where(x => x.UserId == loggedUserId && x.NotificationBody.ToLower() == messageDto.Message.ToLower() && x.Id == messageDto.Id).FirstOrDefaultAsync();
                     if (notification != null)
                     {
                         notification.IsRead = true;
@@ -415,6 +435,52 @@ namespace P2PWallet.Services.Services
             catch
             {
                 response.Status = false;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<string>> GetTransactionsCount()
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                if(_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduser = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                    if (loggeduser.ToLower() != "admin")
+                        throw new Exception("User Unauthorized");
+                    var txnsNo = await _dataContext.Transactions.ToListAsync();
+                    response.Data = txnsNo.Count().ToString();
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Status = false;
+                response.Data = ex.Message;
+                _logger.LogError($"An Error Occurred...{ex.Message}");
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<string>> GetAccountsCount()
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduser = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                    if (loggeduser.ToLower() != "admin")
+                        throw new Exception("User Unauthorized");
+                    var acntNo = await _dataContext.Accounts.ToListAsync();
+                    response.Data = acntNo.Count().ToString();
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Status = false;
+                response.Data = ex.Message;
+                _logger.LogError($"An Error Occurred...{ex.Message}");
             }
             return response;
         }

@@ -23,7 +23,8 @@ namespace P2PWallet.Services.Interface
         public Task CreateKycNotification(int UserId, string Username, string Filename, string Reason);
         public Task<ServiceResponse<string>> SetNonTrasactionsNoitficationsToTrue(MessageDto messageDto);
         public Task CreateVerifiedUserKycNotification(int UserId, string Username);
-
+        public Task<ServiceResponse<string>> GetTransactionsCount();
+        public Task<ServiceResponse<string>> GetAccountsCount();
 
 
 

@@ -30,6 +30,7 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<string>> ForeignTransfers(ForeignTransferDto foreignTransferDto);
         public List<Transactions> GetTransactions();
         public DataTable GetProductDetailsFromDb();
+        public Task<ServiceResponse<TxnsView>> TotalTransactions();
 
 
 

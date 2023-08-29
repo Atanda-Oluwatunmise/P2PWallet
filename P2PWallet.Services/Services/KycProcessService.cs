@@ -466,6 +466,8 @@ namespace P2PWallet.Services.Services
                     await _dataContext.SaveChangesAsync();
 
                     response.Data = "File Approved";
+                    await _notificationService.CreateKycNotification(useracc.Id, useracc.Username, imagedetail.FileName, null);
+
                     var userdocs = await _dataContext.KycDocumentUploads.Where(x => x.UserId == useracc.Id).ToListAsync();
                     foreach( var item in userdocs)
                     {

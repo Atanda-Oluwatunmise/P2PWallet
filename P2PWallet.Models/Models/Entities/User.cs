@@ -43,6 +43,7 @@ namespace P2PWallet.Models.Models.Entities
         public bool? KycVerified { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public DateTime? UserVerifiedAt { get; set; }
+        public string? UserOtp { get; set; }
 
 
         public virtual ICollection<Account> UserAccount { get; set; }

@@ -40,5 +40,19 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpGet("txnscount"), Authorize]
+        public async Task<ServiceResponse<string>> GetTransactionsCount()
+        {
+            var result = await _notificationService.GetTransactionsCount();
+            return result;
+        }
+
+        [HttpGet("acntscount"), Authorize]
+        public async Task<ServiceResponse<string>> GetAccountsCount()
+        {
+            var result = await _notificationService.GetAccountsCount();
+            return result;
+        }
+
     }
 }

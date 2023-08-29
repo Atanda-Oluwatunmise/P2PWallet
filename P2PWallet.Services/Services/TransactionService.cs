@@ -1251,7 +1251,39 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
-    
+        public async Task<ServiceResponse<TxnsView>> TotalTransactions()
+        {
+            var response = new ServiceResponse<TxnsView>();
+            //var dateList = 
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduser = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                    if (loggeduser.ToLower() != "admin")
+                        throw new Exception("User Unauthorized");
+
+                    var ngntxns = await _dataContext.Transactions.Where(x => x.Currency.ToLower() == "ngn").ToListAsync();
+                    var usdtxns = await _dataContext.Transactions.Where(x => x.Currency.ToLower() == "usd").ToListAsync();
+                    var eurtxns = await _dataContext.Transactions.Where(x => x.Currency.ToLower() == "eur").ToListAsync();
+
+                    var data = new TxnsView()
+                    {
+                        NgnTxn = ngntxns,
+                        UsdTxn = usdtxns,
+                        EurTxn = eurtxns
+                    };
+                    response.Data = data;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"Error occured.....{ex.Message}");
+            }
+            return response;
+        }
 
         public ConverterView CurrencyConverter(ConverterDto converterDto)
         {        

@@ -371,9 +371,42 @@ namespace P2PWallet.Services.Services
             {
                 response.Status = false;
                 response.StatusMessage = ex.Message;
+                _logger.LogInformation($"An error occurred....{ex.Message}");
             }
             return response;
         }
+
+        public async Task<ServiceResponse<UsersCount>> LockedandUnlockedUsers()
+        {
+            var response = new ServiceResponse<UsersCount>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduser = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                    if (loggeduser.ToLower() != "admin")
+                        throw new Exception("User Unauthorized");
+
+                    var lockedusers = await _dataContext.Users.Where(x => x.IsLocked == true).ToListAsync();
+                    var unlockedusers = await _dataContext.Users.Where(x => x.IsLocked == false).ToListAsync();
+
+                    var data = new UsersCount()
+                    {
+                        LockedUsers = lockedusers.Count(),
+                        UnlockedUsers = unlockedusers.Count()
+                    };
+                    response.Data = data;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogInformation($"An error occurred....{ex.Message}");
+            }
+            return response;
+        }
+
 
         public async Task<ServiceResponse<List<SearchAccountDetails>>> GetUserDetails(UserSearchDto userSearch)
         {

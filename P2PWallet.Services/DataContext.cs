@@ -118,6 +118,11 @@ namespace P2PWallet.Services
                 .HasForeignKey(c => c.DocumentId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
             });
+
+            modelBuilder.Entity<Chat>()
+                .HasIndex(p => new { p.SenderUsername, p.ReceiverUsername, p.DateofChat})
+                .IsDescending();
+            
         }
            public DbSet<Deposit> Deposit { get; set; }
            public DbSet<Pin> Pin { get; set; }
@@ -140,5 +145,7 @@ namespace P2PWallet.Services
            public DbSet<KycDocument> KycDocuments { get; set; }
            public DbSet<DocumentStatusCode> DocumentStatusCodes { get; set; }
            public DbSet<PendingUser> PendingUsers { get; set; }      
+           public DbSet<Chat> Chats { get; set; }      
+           public DbSet<StartedChat> StartedChats { get; set; }      
     }
 }
