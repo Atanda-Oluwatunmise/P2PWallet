@@ -10,10 +10,9 @@ namespace P2PWallet.Services.Interface
 {
     public interface IMultipleWallets
     {
-        public Task<ServiceResponse<String>> CreateNewAccountWallet(CurrencyObj currencyObj);
-        public Task<ServiceResponse<String>> VerifyCurrency(CurrencyObj currencyObj);
-        public Task<ServiceResponse<List<WalletResponseView>>> VerifyAccount(CurrencyObj currencyObj);
-
-
+        Task<ServiceResponse<String>> CreateNewAccountWallet(CurrencyObj currencyObj);
+        Task<ServiceResponse<String>> VerifyCurrency(CurrencyObj currencyObj);
+        Task<ServiceResponse<List<WalletResponseView>>> VerifyAccount(CurrencyObj currencyObj);
+        Task<ServiceResponse<WalletResponseView>> VerifyReceipientAccount(ReceipientCurrencyObj currencyObj);
     }
 }

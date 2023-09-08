@@ -206,6 +206,48 @@ namespace P2PWallet.Services.Services
                 _logger.LogError($"An Error just occured.... {ex.Message}");
             }
             return response;
+        }    
+        
+        public async Task<ServiceResponse<WalletResponseView>> VerifyReceipientAccount(ReceipientCurrencyObj currencyObj)
+        {
+            var response = new ServiceResponse<WalletResponseView>();
+            List<WalletResponseView> accountDetails = new List<WalletResponseView>();
+
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var user = await _dataContext.Accounts.Include("User").Where(x => x.UserId == loggeduserId).FirstOrDefaultAsync();
+                    if (user == null)
+                        throw new Exception("Unauthorizeds User logged in.");
+
+                    var receipient = await _dataContext.Users.Where(x => x.Username.ToLower() == currencyObj.UserName.ToLower()).FirstOrDefaultAsync();
+
+
+                    var accountCurrency = await _dataContext.Accounts.Where(x => x.UserId == receipient.Id && x.Currency.ToLower() == currencyObj.Currency.ToLower()).FirstOrDefaultAsync();
+                    if (accountCurrency == null)
+                    {
+                        throw new Exception("Wallet Account does not exist");
+                    }
+                    var data = new WalletResponseView()
+                    {
+                        Currency = accountCurrency.Currency,
+                        AccountNumber = accountCurrency.AccountNumber,
+                        Balance = accountCurrency.Balance
+                    };
+                    response.Data = data;
+
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"An Error just occured.... {ex.Message}");
+            }
+            return response;
         }
     }
 }

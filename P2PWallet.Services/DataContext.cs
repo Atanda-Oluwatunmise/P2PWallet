@@ -122,6 +122,15 @@ namespace P2PWallet.Services
             modelBuilder.Entity<Chat>()
                 .HasIndex(p => new { p.SenderUsername, p.ReceiverUsername, p.DateofChat})
                 .IsDescending();
+
+            modelBuilder.Entity<ChatNotificationBox>(entity =>
+            {
+                entity.HasKey(a => a.Id);
+            });
+            
+            modelBuilder.Entity<ChatNotificationBox>()
+                .HasIndex(p => new { p.Username, p.SenderName})
+                .IsDescending();
             
         }
            public DbSet<Deposit> Deposit { get; set; }
@@ -147,5 +156,6 @@ namespace P2PWallet.Services
            public DbSet<PendingUser> PendingUsers { get; set; }      
            public DbSet<Chat> Chats { get; set; }      
            public DbSet<StartedChat> StartedChats { get; set; }      
+           public DbSet<ChatNotificationBox> ChatNotificationbox { get; set; }      
     }
 }

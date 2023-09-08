@@ -25,8 +25,9 @@ namespace P2PWallet.Services.Interface
         public Task CreateVerifiedUserKycNotification(int UserId, string Username);
         public Task<ServiceResponse<string>> GetTransactionsCount();
         public Task<ServiceResponse<string>> GetAccountsCount();
-
-
+        Task ReadUnreadMessages(ReadChats readChats);
+        Task<ServiceResponse<List<UnreadChats>>> GetUnreadMessages(UnreadChatsDto unreadChatsDto);
+        Task<ServiceResponse<string>> GetUnreadMessagesCount();
 
     }
 }

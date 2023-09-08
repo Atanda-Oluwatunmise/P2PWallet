@@ -10,8 +10,8 @@ namespace P2PWallet.Services.Interface
 {
     public interface IChatService
     {
-        Task SendMessageToAdmin(ChatDto chatDto);
-        Task SendMessageFromAdmin(ChatDto chatDto);
+        Task SendMessageToAdmin(UserChatDto chatDto);
+        Task SendMessageFromAdmin(UserChatDto chatDto);
         Task<ServiceResponse<List<ChatView>>> RetrieveMessagesForAdmin(GetMessagesDto getMessagesDto);
         Task<ServiceResponse<List<ChatView>>> RetrieveMessagesForUser(GetMessagesDto getMessagesDto);
         Task<ServiceResponse<SearchUserViewmodel>> FindUser(SearchDto userObj);
@@ -19,7 +19,10 @@ namespace P2PWallet.Services.Interface
         Task<ServiceResponse<List<SearchUserViewmodel>>> ListOfStartedChats(GetMessagesDto getMessagesDto);
         Task<ServiceResponse<string>> VerifyUserEmail(EmailDto emailDto);
         Task<ServiceResponse<string>> VerifyOtp(OtpDto otpDto);
-
+        Task UsertoUserChat(UserChatDto chatDto);
+        Task<ServiceResponse<List<SearchUserViewmodel>>> ListOfStartedChatsforAdmin(GetMessagesDto getMessagesDto);
+        Task<ServiceResponse<List<ChatView>>> RetrieveMessagesForUserOutside(GetMessagesDto getMessagesDto);
+        Task<ServiceResponse<chatUserDetails>> GetReceipientDetails(GetMessagesDto getMessagesDto);
 
 
     }

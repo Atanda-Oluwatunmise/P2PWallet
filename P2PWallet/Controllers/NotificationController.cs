@@ -54,5 +54,25 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpPost("getunreadchats"), Authorize]
+        public async Task<ServiceResponse<List<UnreadChats>>> GetUnreadMessages(UnreadChatsDto unreadChatsDto)
+        {
+            var result = await _notificationService.GetUnreadMessages(unreadChatsDto);
+            return result;
+        }
+
+        [HttpPost("readunreadchats"), Authorize]
+        public async Task ReadUnreadMessages(ReadChats readChats)
+        {
+           await _notificationService.ReadUnreadMessages(readChats);
+        }
+
+        [HttpPost("unreadchatscount"), Authorize]
+        public async Task<ServiceResponse<string>> GetUnreadMessagesCount()
+        {
+            var result = await _notificationService.GetUnreadMessagesCount();
+            return result;
+        }
+
     }
 }

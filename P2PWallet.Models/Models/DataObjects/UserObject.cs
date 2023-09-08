@@ -393,6 +393,11 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string Currency { get; set; }
     }
+    public class ReceipientCurrencyObj
+    {
+        public string UserName { get; set; }
+        public string Currency { get; set; }
+    }
 
     public class WalletResponseView
     {
@@ -604,6 +609,13 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string Username { get; set; }
         public string Message { get; set; }
+    } 
+    
+    public class UserChatDto
+    {
+        public string Username { get; set; }
+        public string? ReceiverUsername { get; set; }
+        public string Message { get; set; }
     }
 
     public class ChatView
@@ -619,5 +631,29 @@ namespace P2PWallet.Models.Models.DataObjects
     {
         public string? SenderUserName { get; set; }
         public string? ReceiverUserName { get; set; }
+    } 
+    
+    public class UnreadChats
+    {
+        public string SenderUserName { get; set; }
+        public string Time { get; set; }
+    } 
+    
+    public class UnreadChatsDto
+    {
+        public string UserName { get; set; }
     }
+    public class ReadChats
+    {
+        public string Username { get; set; }
+        public string Sendername { get; set; }
+        public int NotificationCount { get; set; }
+    }
+
+    public class chatUserDetails
+    {
+        public string FullName { get; set; }
+        public List<string> Currencies { get; set; } 
+    }
+
 }

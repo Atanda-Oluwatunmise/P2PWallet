@@ -1,4 +1,5 @@
 ﻿using Aspose.Pdf.Operators;
+using Azure;
 using Dapper;
 using DinkToPdf.Contracts;
 using MailKit;
@@ -166,6 +167,9 @@ namespace P2PWallet.Services.Services
             }
         }
 
+
+        
+
         public async Task SendLockedUserNotification(string receipient, string message)
         {
             try
@@ -184,6 +188,18 @@ namespace P2PWallet.Services.Services
             try
             {
                 await _hub.Clients.All.SendAsync("ReceiveNotification", receipient, message, reference);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"An error occurred {ex.Message}");
+            }
+        }
+
+        public async Task SendChatNotification(string receipient)
+        {
+            try
+            {
+                //await _hub.Clients.All.SendAsync("ReceiveMsgNotification", receipient);
             }
             catch (Exception ex)
             {
@@ -274,6 +290,95 @@ namespace P2PWallet.Services.Services
             catch (Exception ex)
             {
                 _logger.LogError($"An Error Occurred...{ex.Message}");
+            }
+        }
+
+
+        public async Task<ServiceResponse<List<UnreadChats>>> GetUnreadMessages(UnreadChatsDto unreadChatsDto)
+        {
+            var response = new ServiceResponse<List<UnreadChats>>();
+            var msglist = new List <UnreadChats>();
+            try
+            {
+                var notificationacc = await _dataContext.ChatNotificationbox.Where(x => x.Username == unreadChatsDto.UserName).FirstOrDefaultAsync();
+                if (notificationacc != null)
+                {
+                    var allmesages = await _dataContext.ChatNotificationbox.Where(x => x.Username == notificationacc.Username && x.IsRead == false).ToListAsync();
+
+                    foreach (var msg in allmesages)
+                    {
+                        var data = new UnreadChats()
+                        {
+                            SenderUserName = msg.SenderName,
+                            Time = msg.DateSent.ToString("hh:mm tt")
+                        };
+                        msglist.Add(data);
+                    }
+                    response.Data = msglist;
+                }
+            }
+         
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"{ex.StackTrace}....{ex.Message}");
+            }
+            return response;
+        } 
+        
+        public async Task<ServiceResponse<string>> GetUnreadMessagesCount()
+        {
+            var response = new ServiceResponse<string>();
+            var msglist = new List <UnreadChats>();
+            try
+            {
+                if (_httpContextAccessor.HttpContext != null)
+                {
+                    var loggeduserId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+                    var user = await _dataContext.Users.Where(x => x.Id == loggeduserId).FirstOrDefaultAsync();
+                    if (user == null)
+                        throw new Exception("Unauthorizeds User logged in.");
+
+                    var notificationacc = await _dataContext.ChatNotificationbox.Where(x => x.Username == user.Username).FirstOrDefaultAsync();
+                    if (notificationacc != null)
+                    {
+                        var allmesages = await _dataContext.ChatNotificationbox.Where(x => x.Username == notificationacc.Username && x.IsRead == false).ToListAsync();
+
+                        response.Data = allmesages.Count.ToString();
+                    }
+                }
+            }
+         
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"{ex.StackTrace}....{ex.Message}");
+            }
+            return response;
+        }  
+        
+        public async Task ReadUnreadMessages(ReadChats readChats)
+        {
+            try
+            {
+                var notificationacc = await _dataContext.ChatNotificationbox.Where(x => x.Username == readChats.Username && x.SenderName == readChats.Sendername && x.IsRead == false).ToListAsync();
+
+                //check if the count == the count of the message list
+                if (notificationacc.Count() == readChats.NotificationCount)
+                {
+                    foreach (var notification in notificationacc)
+                    {
+                        notification.IsRead = true;
+                        await _dataContext.SaveChangesAsync();
+                    }
+                }
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError($"{ex.StackTrace}....{ex.Message}");
             }
         }
 

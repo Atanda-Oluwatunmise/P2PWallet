@@ -504,7 +504,7 @@ namespace P2PWallet.Services.Services
                 {
                     var loggedinId = Convert.ToInt32(_httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
                     var loggedinUser = await _dataContext.Users.Where(x => x.Id == loggedinId).FirstOrDefaultAsync();
-                    var verifypinuser = await _dataContext.ImageDetails.Include("UserImageDetail").Where(x => x.ImageUserId == loggedinId).FirstOrDefaultAsync();
+                    var verifypinuser = await _dataContext.ImageDetails.Where(x => x.ImageUserId == loggedinId).FirstOrDefaultAsync();
 
 
                     if (loggedinUser != null)

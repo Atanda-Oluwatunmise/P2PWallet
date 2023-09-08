@@ -57,7 +57,7 @@ try
     builder.Services.AddTransient<IValidator<ResetPasswordRequest>, ResetPasswordValidator>();
     builder.Services.AddTransient<IValidator<ResetPinRequest>, ResetPinValidator>();
     builder.Services.AddTransient<IValidator<PinDto>, CreatePinValidator>();
-    builder.Services.AddTransient<IValidator<EditViewModel>, EditDetailValidator>();
+    //builder.Services.AddTransient<IValidator<EditViewModel>, EditDetailValidator>();
     builder.Services.AddTransient<IValidator<SecurityQuestionDto>, SecurityQuestionValidator>();
     builder.Services.AddTransient<IValidator<LockingUserDto>, LockingUserValidator>();
     builder.Services.AddTransient<IValidator<ResetPasswordDto>, ResetPasswordDtoValidator>();
@@ -131,7 +131,7 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:63938").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:64092", "http://127.0.0.1:5501").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 
     app.UseAuthentication();
 

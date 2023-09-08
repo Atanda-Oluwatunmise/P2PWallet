@@ -63,7 +63,7 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPut("editinfo"), Authorize]
-        public async Task<ServiceResponse<List<EditViewModel>>> EditUserInfo(EditViewModel request)
+        public async Task<ServiceResponse<List<EditViewModel>>> EditUserInfo([FromForm]  EditViewModel request)
         {
             var result = await _userServices.EditUserInfo(request);
             return result;
@@ -110,6 +110,13 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpPost("verifyreceipientaccount"), Authorize]
+        public async Task<ServiceResponse<WalletResponseView>> VerifyReceipientAccount(ReceipientCurrencyObj currencyObj)
+        {
+            var result = await _multipleWallets.VerifyReceipientAccount(currencyObj);
+            return result;
+        }
+
         [HttpGet("lockedandunlockedusers"), Authorize]
         public async Task<ServiceResponse<UsersCount>> LockedandUnlockedUsers()
         {
@@ -117,12 +124,12 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
-        //[HttpGet("verifyimagestatus"), Authorize]
-        //public async Task<bool> VerifyImageStatus()
-        //{
-        //    var result = await _userServices.VerifyImageStatus();
-        //    return result;
-        //}
+        [HttpGet("verifyimagestatus"), Authorize]
+        public async Task<bool> VerifyImageStatus()
+        {
+            var result = await _userServices.VerifyImageStatus();
+            return result;
+        }
 
 
 

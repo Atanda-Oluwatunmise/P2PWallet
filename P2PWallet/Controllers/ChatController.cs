@@ -19,13 +19,21 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPost("postusermessage"), Authorize]
-        public async Task SendMessageToAdmin(ChatDto chatDto)
+        public async Task SendMessageToAdmin(UserChatDto chatDto)
         {
            await _chatService.SendMessageToAdmin(chatDto);
         }
 
+        [HttpPost("usertousermessage"), Authorize]
+        public async Task UsertoUserChat(UserChatDto chatDto)
+        {
+            await _chatService.UsertoUserChat(chatDto);
+
+        }
+
+
         [HttpPost("postadminmessage"), Authorize]
-        public async Task SendMessageFromAdmin(ChatDto chatDto)
+        public async Task SendMessageFromAdmin(UserChatDto chatDto)
         {
             await _chatService.SendMessageFromAdmin(chatDto);
         }
@@ -37,10 +45,17 @@ namespace P2PWallet.Api.Controllers
             return response;
         }
 
-        [HttpPost("getusermessages"), Authorize]
+        [HttpPost("getusermessages")]
         public async Task<ServiceResponse<List<ChatView>>> RetrieveMessagesForUser(GetMessagesDto getMessagesDto)
         {
             var response = await _chatService.RetrieveMessagesForUser(getMessagesDto);
+            return response;
+        }
+
+        [HttpPost("getlockedusermessages")]
+        public async Task<ServiceResponse<List<ChatView>>> RetrieveMessagesForUserOutside(GetMessagesDto getMessagesDto)
+        {
+            var response = await _chatService.RetrieveMessagesForUserOutside(getMessagesDto);
             return response;
         }
 
@@ -50,6 +65,7 @@ namespace P2PWallet.Api.Controllers
             var response = await _chatService.FindUser(userObj);
             return response;
         }
+
 
         [HttpPost("startchatting"), Authorize]
         public async Task<ServiceResponse<List<ChatView>>> StartChatting(GetMessagesDto getMessagesDto)
@@ -79,6 +95,19 @@ namespace P2PWallet.Api.Controllers
             return response;
         }
 
+        [HttpPost("startedchatsforadmin")]
+        public async Task<ServiceResponse<List<SearchUserViewmodel>>> ListOfStartedChatsforAdmin(GetMessagesDto getMessagesDto)
+        {
+            var response = await _chatService.ListOfStartedChatsforAdmin(getMessagesDto);
+            return response;
+        }
+
+        [HttpPost("getreveiverdetails"), Authorize]
+        public async Task<ServiceResponse<chatUserDetails>> GetReceipientDetails(GetMessagesDto getMessagesDto)
+        {
+            var response = await _chatService.GetReceipientDetails(getMessagesDto);
+            return response;
+        }
 
     }
 }
