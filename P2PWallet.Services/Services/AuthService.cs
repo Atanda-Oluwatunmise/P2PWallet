@@ -232,6 +232,61 @@ namespace P2PWallet.Services.Services
                 _logger.LogError($"AN ERROR OCCURRED ...{ex.Message}");
             }
             return response;
+        }    
+        
+        public async Task<ServiceResponse<string>> ForgotPasswordAng(EmailDto emaill)
+        {
+            
+            var response = new ServiceResponse<string>();
+            try
+            {
+                var user = await _dataContext.Users.Include("UserAccount").Where(x => x.Email == emaill.Email).FirstOrDefaultAsync();
+                if (user == null)
+                {
+                    throw new Exception("Email cannot be found");
+                }
+                if (user.VerificationToken == null)
+                {
+                    throw new Exception("User  cannot change password");
+                }
+                var token = _userServices.GenerateEmailToken();
+                var encodedToken = Encoding.UTF8.GetBytes(token);
+                var validToken = WebEncoders.Base64UrlEncode(encodedToken);
+
+                string url = $"{_configuration.GetSection("ResetPassword:ResetPassWordurl").Value!}?token={validToken}";
+                var sendmail = await _mailService.ResetPasswordEmailAsync(emaill.Email, "Reset Password", "<h1>Follow the instruction to reset your password</h1>",
+                    $"<p>To reset your password <a href={url}>Click Here</a></p>" +
+                    $"<p>Or paste {url} in your web browser</p>");
+
+
+                if (sendmail == true)
+                {
+                    var resetdetails = new ResetPassword
+                    {
+                        UserId = user.Id,
+                        Email = user.Email,
+                        Token = validToken,
+                        TokenExpires = DateTime.Now.AddDays(1)
+                    };
+                    await _dataContext.ResetPasswords.AddAsync(resetdetails);
+                    await _dataContext.SaveChangesAsync();
+
+                    response.Data = "Reset password link has been sent to the email successfully, go and verify";
+                }
+                if (sendmail != true)
+                {
+                    response.Status = false;
+                    response.Data = null;
+                    response.StatusMessage = "Password link cannot be sent";
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"AN ERROR OCCURRED ...{ex.Message}");
+            }
+            return response;
         }
 
         public async Task<ServiceResponse<string>> ForgotPin(EmailDto emaill)
@@ -306,7 +361,7 @@ namespace P2PWallet.Services.Services
 
                 _dataContext.SaveChanges();
 
-                response.Data = "Password successfully changed";
+                response.Data = "Password successfully changed, Proceed to Log in";
             }
             catch(Exception ex)
             {

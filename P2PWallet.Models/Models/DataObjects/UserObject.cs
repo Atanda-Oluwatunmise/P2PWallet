@@ -181,6 +181,12 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Username { get; set; }
         public string Password { get; set; }
     }
+    
+    public class ResetAdminPasswordDto
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
 
     public class ChangePasswordDto
     {
@@ -460,6 +466,10 @@ namespace P2PWallet.Models.Models.DataObjects
         public string Reason { get; set; }
         public DateTime Date { get; set; }
     }
+    public class ListOfAdmins
+    {
+        public string Email { get; set; }
+    }
 
     public class ListOfGLAccounts
     {
@@ -518,7 +528,6 @@ namespace P2PWallet.Models.Models.DataObjects
     public class ResetAdminDto
     {
         public string Email { get; set; }
-        public string NewPassword { get; set; }
     }  
     
     public class DisableAdminDto
@@ -597,12 +606,19 @@ namespace P2PWallet.Models.Models.DataObjects
         
     }
 
+
+    public class PreTxnView
+    {
+        public string? Currency { get; set; }
+        public int? CurrencyCount { get; set; }
+    }
+
     public class TxnsView
     {
         //public List<DateTime> DateofTxn { get; set; }
-        public List<Transactions> NgnTxn { get; set; }
-        public List<Transactions> UsdTxn { get; set; }
-        public List<Transactions> EurTxn { get; set; }
+        public PreTxnView NgnTxn { get; set; }
+        public PreTxnView UsdTxn { get; set; }
+        public PreTxnView EurTxn { get; set; }
     }
 
     public class ChatDto

@@ -1269,9 +1269,21 @@ namespace P2PWallet.Services.Services
 
                     var data = new TxnsView()
                     {
-                        NgnTxn = ngntxns,
-                        UsdTxn = usdtxns,
-                        EurTxn = eurtxns
+                        NgnTxn = new PreTxnView()
+                        {
+                            Currency = "NGN",
+                            CurrencyCount = ngntxns.Count
+                        },
+                        UsdTxn = new PreTxnView()
+                        {
+                            Currency = "USD",
+                            CurrencyCount = usdtxns.Count
+                        },
+                        EurTxn = new PreTxnView()
+                        {
+                            Currency = "EUR",
+                            CurrencyCount = eurtxns.Count
+                        }
                     };
                     response.Data = data;
                 }

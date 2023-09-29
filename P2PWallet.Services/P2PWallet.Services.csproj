@@ -38,6 +38,7 @@
     <PackageReference Include="Octokit" Version="5.0.2" />
     <PackageReference Include="Polybioz.HtmlRenderer.PdfSharp.Core" Version="1.0.0" />
     <PackageReference Include="SqlTableDependency" Version="8.5.8" />
+    <PackageReference Include="xunit" Version="2.5.1" />
   </ItemGroup>
 
   <ItemGroup>

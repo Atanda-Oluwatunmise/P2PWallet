@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWallet.Services", "P2PWa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWallet.Models", "P2PWallet.Models\P2PWallet.Models.csproj", "{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "P2PWalletTestsApi", "P2PWalletTestsApi\P2PWalletTestsApi.csproj", "{54DC641E-4AF3-4852-A259-E139294D53DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AE5C762-3A7F-40BA-A275-92C65ACA53E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54DC641E-4AF3-4852-A259-E139294D53DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54DC641E-4AF3-4852-A259-E139294D53DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54DC641E-4AF3-4852-A259-E139294D53DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54DC641E-4AF3-4852-A259-E139294D53DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

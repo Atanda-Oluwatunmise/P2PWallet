@@ -118,7 +118,7 @@ namespace P2PWallet.Api.Controllers
         }
 
         [HttpPost("changeadminpassword")]
-        public async Task<ServiceResponse<string>> ChangeAdminPassword(ResetPasswordDto resetPasswordDto)
+        public async Task<ServiceResponse<string>> ChangeAdminPassword(ResetAdminPasswordDto resetPasswordDto)
         {
             var result = await _adminService.ChangeAdminPassword(resetPasswordDto);
             return result;
@@ -131,6 +131,25 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpGet("getalladmins"), Authorize]
+        public async Task<ServiceResponse<List<ListOfAdmins>>> GetAllAdmins()
+        {
+            var result = await _adminService.GetAllAdmins();
+            return result;
+        }
 
+        [HttpGet("getalldiasbledadmins"), Authorize]
+        public async Task<ServiceResponse<List<ListOfAdmins>>> GetAllDisabledAdmins()
+        {
+            var result = await _adminService.GetAllDisabledAdmins();
+            return result;
+        }
+
+        [HttpPost("enableadmin"), Authorize]
+        public async Task<ServiceResponse<string>> EnableAdminAccount(DisableAdminDto disableAdminDto)
+        {
+            var result = await _adminService.EnableAdminAccount(disableAdminDto);
+            return result;
+        }
     }
 }

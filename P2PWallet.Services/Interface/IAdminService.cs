@@ -10,24 +10,25 @@ namespace P2PWallet.Services.Interface
 {
     public interface IAdminService
     {
-        public Task<ServiceResponse<LoginView>> Login(LoginDto loginreq);
-        public Task<ServiceResponse<string>> CreateNewAdmins(EmailDto emailDto);
-        public Task<ServiceResponse<string>> LockUserAccount(LockingUserDto lockingUserDto);
-        public Task<ServiceResponse<string>> UnlockUserAccount(EmailDto emaildto);
-        public Task<ServiceResponse<GLAccountView>> CreateGlAccount(GLAccountDTO gLAccount);
-        public Task<ServiceResponse<List<ListOfLockedUsers>>> GetListOfLockedUsers();
-        public Task<ServiceResponse<string>> SetWalletCharge(ChargeorRateDTo chargeorRateDTo);
-        public Task<ServiceResponse<string>> SetWalletRate(ChargeorRateDTo chargeorRateDTo);
-        public Task<ServiceResponse<List<ListOfGLAccounts>>> GetAllGlAccounts();
-        public Task<ServiceResponse<List<GLTransactionHistory>>> GetAllGlTransactionsHistory();
-        public Task<ServiceResponse<List<GLTransactionHistory>>> GetWalletGlTransactionsHistory(CurrencyObj currencyobj);
-        public Task<ServiceResponse<string>> ResetAdminCredentials(ResetAdminDto resetAdminDto);
-        public Task<ServiceResponse<string>> DisableAdminAccount(DisableAdminDto disableAdminDto);
-        public Task<ServiceResponse<string>> ChangeAdminPassword(ResetPasswordDto resetPasswordDto);
-        public Task<ServiceResponse<AdminAccount>> GetAdminAccountDetail();
-
-
-        public string GenerateGlNumber(string currency);
+         Task<ServiceResponse<LoginView>> Login(LoginDto loginreq);
+         Task<ServiceResponse<string>> CreateNewAdmins(EmailDto emailDto);
+         Task<ServiceResponse<string>> LockUserAccount(LockingUserDto lockingUserDto);
+         Task<ServiceResponse<string>> UnlockUserAccount(EmailDto emaildto);
+         Task<ServiceResponse<GLAccountView>> CreateGlAccount(GLAccountDTO gLAccount);
+         Task<ServiceResponse<List<ListOfLockedUsers>>> GetListOfLockedUsers();
+         Task<ServiceResponse<string>> SetWalletCharge(ChargeorRateDTo chargeorRateDTo);
+         Task<ServiceResponse<string>> SetWalletRate(ChargeorRateDTo chargeorRateDTo);
+         Task<ServiceResponse<List<ListOfGLAccounts>>> GetAllGlAccounts();
+         Task<ServiceResponse<List<GLTransactionHistory>>> GetAllGlTransactionsHistory();
+         Task<ServiceResponse<List<GLTransactionHistory>>> GetWalletGlTransactionsHistory(CurrencyObj currencyobj);
+         Task<ServiceResponse<string>> ResetAdminCredentials(ResetAdminDto resetAdminDto);
+         Task<ServiceResponse<string>> DisableAdminAccount(DisableAdminDto disableAdminDto);
+         Task<ServiceResponse<string>> ChangeAdminPassword(ResetAdminPasswordDto resetPasswordDto);
+         Task<ServiceResponse<AdminAccount>> GetAdminAccountDetail();
+         Task<ServiceResponse<List<ListOfAdmins>>> GetAllAdmins();
+         Task<ServiceResponse<List<ListOfAdmins>>> GetAllDisabledAdmins();
+         Task<ServiceResponse<string>> EnableAdminAccount(DisableAdminDto disableAdminDto);
+         public string GenerateGlNumber(string currency);
 
     }
 }

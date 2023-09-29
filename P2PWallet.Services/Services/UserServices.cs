@@ -26,6 +26,7 @@ using PdfSharpCore.Pdf;
 using TheArtOfDev.HtmlRenderer.PdfSharp;
 using PageSize = PdfSharpCore.PageSize;
 using Microsoft.Extensions.Options;
+using P2PWallet.Models.Models.DataObjects.WebHook;
 
 namespace P2PWallet.Services.Services
 {
@@ -507,7 +508,7 @@ namespace P2PWallet.Services.Services
                     var verifypinuser = await _dataContext.ImageDetails.Where(x => x.ImageUserId == loggedinId).FirstOrDefaultAsync();
 
 
-                    if (loggedinUser != null)
+                    if (loggedinUser != null && verifypinuser != null)
                     {
                         if (request.ImageFile.FileName != null || request.ImageFile.Length != 0)
                         {
@@ -524,6 +525,34 @@ namespace P2PWallet.Services.Services
 
                         _dataContext.Users.Update(loggedinUser);
                         _dataContext.ImageDetails.Update(verifypinuser);
+                        await _dataContext.SaveChangesAsync();
+
+                        response.Data = updateInfo;
+                    }  
+                    
+                    if (loggedinUser != null && verifypinuser == null)
+                    {
+                        if (request.ImageFile.FileName != null || request.ImageFile.Length != 0)
+                        {
+                            var path = Path.Combine(_webHostEnvironment.WebRootPath, "Images/", request.ImageFile.FileName);
+                            byte[] FileBytes = File.ReadAllBytes(path);
+
+                            var data = new ImageDetail()
+                            {
+                                ImageUserId = loggedinUser.Id,
+                                ImageName = request.ImageFile.FileName,
+                                Image = FileBytes
+                            };
+                            _dataContext.ImageDetails.Add(data);
+                            await _dataContext.SaveChangesAsync();
+                        }
+
+                        loggedinUser.FirstName = request.FirstName;
+                        loggedinUser.LastName = request.LastName;
+                        loggedinUser.PhoneNumber = request.Phonenumber;
+                        loggedinUser.Address = request.Address;
+
+                        _dataContext.Users.Update(loggedinUser);
                         await _dataContext.SaveChangesAsync();
 
                         response.Data = updateInfo;

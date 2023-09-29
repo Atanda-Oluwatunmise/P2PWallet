@@ -15,6 +15,8 @@ namespace P2PWallet.Services.Interface
         public Task<ServiceResponse<string>> VerifyPin(PinDto pin);
         public Task<ServiceResponse<string>> ValidateUser();
         public Task<ServiceResponse<string>> ForgotPassword(EmailDto emaill);
+        Task<ServiceResponse<string>> ForgotPasswordAng(EmailDto emaill);
+
         public Task<ServiceResponse<string>> ForgotPin(EmailDto emaill);
         public Task<ServiceResponse<string>> ChangePassword(ChangePasswordDto changepassword);
         public Task<ServiceResponse<string>> ChangePin(ChangePinDto changepin);

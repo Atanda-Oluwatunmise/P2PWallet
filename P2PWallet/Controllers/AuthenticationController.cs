@@ -53,6 +53,13 @@ namespace P2PWallet.Api.Controllers
             return result;
         }
 
+        [HttpPost("forgotpasswordang")]
+        public async Task<ServiceResponse<string>> ForgotPasswordAng(EmailDto emaill)
+        {
+            var result = await _authService.ForgotPasswordAng(emaill);
+            return result;
+        }
+
         [HttpPost("resetpassword")]
         public async Task<ServiceResponse<string>> ResetPassword(ResetPasswordRequest request)
         {

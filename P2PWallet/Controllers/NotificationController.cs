@@ -67,7 +67,7 @@ namespace P2PWallet.Api.Controllers
            await _notificationService.ReadUnreadMessages(readChats);
         }
 
-        [HttpPost("unreadchatscount"), Authorize]
+        [HttpGet("unreadchatscount"), Authorize]
         public async Task<ServiceResponse<string>> GetUnreadMessagesCount()
         {
             var result = await _notificationService.GetUnreadMessagesCount();

@@ -131,7 +131,7 @@ try
 
     app.UseHttpsRedirection();
 
-    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:64092", "http://127.0.0.1:5501").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    app.UseCors(policy => policy.WithOrigins("http://localhost:4200", "http://localhost:57338", "http://127.0.0.1:5501").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 
     app.UseAuthentication();
 

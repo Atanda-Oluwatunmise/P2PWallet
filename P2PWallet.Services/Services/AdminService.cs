@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using NPOI.SS.Formula.Functions;
 using Octokit;
 using P2PWallet.Models.Models.DataObjects;
 using P2PWallet.Models.Models.Entities;
@@ -124,6 +125,12 @@ namespace P2PWallet.Services.Services
                     if (!VerifyPasswordHash(loginreq.Password, admin.PasswordKey, admin.Password))
                     {
                         throw new Exception("Username/Password is Incorrect");
+                    }
+
+                    if(admin.Disabled == true)
+                    {
+                        throw new Exception("Admin's account is disabled");
+
                     }
                 }
 
@@ -326,7 +333,7 @@ namespace P2PWallet.Services.Services
             return await _dataContext.Admins.AnyAsync(x => x.Username == userName);
         }
 
-        public async Task <ServiceResponse<string>> ChangeAdminPassword(ResetPasswordDto resetPasswordDto)
+        public async Task <ServiceResponse<string>> ChangeAdminPassword(ResetAdminPasswordDto resetPasswordDto)
         {
             var response = new ServiceResponse<string>();
             try
@@ -522,6 +529,84 @@ namespace P2PWallet.Services.Services
             return response;
         }
 
+        public async Task<ServiceResponse<List<ListOfAdmins>>> GetAllAdmins()
+        {
+            var response = new ServiceResponse<List<ListOfAdmins>>();
+            var adminsList = new List<ListOfAdmins>();
+
+            try
+            {
+                var roleofAdmin = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                if (roleofAdmin.ToLower() != "admin")
+                {
+                    throw new Exception("User is not authorized to view");
+                }
+                var admins = _dataContext.Admins.ToList();
+                foreach (var admin in admins)
+                {
+                    var data = new ListOfAdmins()
+                    {
+                        Email = admin.Email
+                    };
+                    adminsList.Add(data);
+                }
+
+                response.Data = adminsList;
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"{ex.StackTrace}....{ex.Message}");
+            }
+            return response;
+        }  
+        public async Task<ServiceResponse<List<ListOfAdmins>>> GetAllDisabledAdmins()
+        {
+            var response = new ServiceResponse<List<ListOfAdmins>>();
+            var adminsList = new List<ListOfAdmins>();
+
+            try
+            {
+                var roleofAdmin = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Role);
+                if (roleofAdmin.ToLower() != "admin")
+                {
+                    throw new Exception("User is not authorized to view");
+                }
+                var admins = _dataContext.Admins.Where(x => x.Disabled == true).ToList();
+                if (admins.Count == 0)
+                {
+                    var data = new ListOfAdmins()
+                    {
+                        Email = "null"
+                    };
+                    adminsList.Add(data);
+                    response.Data = adminsList;
+                }
+
+                if (admins.Count != 0)
+                {
+                    foreach (var admin in admins)
+                    {
+                        var data = new ListOfAdmins()
+                        {
+                            Email = admin.Email
+                        };
+                        adminsList.Add(data);
+                    }
+
+                    response.Data = adminsList;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"{ex.StackTrace}....{ex.Message}");
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<string>> SetWalletCharge(ChargeorRateDTo chargeorRateDTo)
         {
             var response = new ServiceResponse<string>();
@@ -706,17 +791,21 @@ namespace P2PWallet.Services.Services
                         throw new Exception("Admin account does not exist");
                     }
 
-                    if (VerifyPasswordHash(resetAdminDto.NewPassword, adminaccount.PasswordKey, adminaccount.Password))
-                    {
-                        throw new Exception("Cannot use old password");
-                    }
+                    //if (VerifyPasswordHash(resetAdminDto.NewPassword, adminaccount.PasswordKey, adminaccount.Password))
+                    //{
+                    //    throw new Exception("Cannot use old password");
+                    //}
+
+                    int passwordLength = 8;
+                    var generatedPassword = AutogenerateAdminPassword(passwordLength);
+                    
 
                     byte[] passwordKey = null;
                     byte[] passwordHash = null;
                     using (var hmac = new HMACSHA512())
                     {
                         passwordKey = hmac.Key;
-                        passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(resetAdminDto.NewPassword));
+                        passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(generatedPassword));
                     }
                     adminaccount.Password = passwordHash;
                     adminaccount.PasswordKey = passwordKey;
@@ -726,12 +815,12 @@ namespace P2PWallet.Services.Services
                     response.Data = $"{resetAdminDto.Email} credentials has been reset!";
                     _logger.LogInformation($"{response.Data}........");
                 
-                    string subject = "LOGIN CREDENTIALS RESET";
+                    string subject = "Login Credentials Reset";
                     string MailBody = "<!DOCKTYPE html>" +
                                             "<html>" +
                                                 "<body>" +
                                                 $"<h3>Dear admin {adminaccount.Email},</h3>" +
-                                                $"<h5>Your Password has been reset, new password is {resetAdminDto.NewPassword}." +
+                                                $"<h5>Your Password has been reset, new password is {generatedPassword}." +
                                                 $"Please go ahead to change your password on first login.</h5>" +
                                                 $"<h5>Warm regards.</h5>" +
                                                 "</body>" +
@@ -739,7 +828,6 @@ namespace P2PWallet.Services.Services
 
                   await _mailService.SendLoginDetails(adminaccount.Email, subject, MailBody);
                 }
-
             }
             catch (Exception ex)
             {
@@ -747,8 +835,7 @@ namespace P2PWallet.Services.Services
                 response.StatusMessage = ex.Message;
                 _logger.LogError($"An Error Occurred...{ex.Message}");
             }
-            return response;
-            
+            return response;           
         }
 
         public async Task<ServiceResponse<string>> DisableAdminAccount(DisableAdminDto disableAdminDto)
@@ -784,6 +871,38 @@ namespace P2PWallet.Services.Services
             }
             return response;
         }
-        //View kyc validations of users
+        public async Task<ServiceResponse<string>> EnableAdminAccount(DisableAdminDto disableAdminDto)
+        {
+            var response = new ServiceResponse<string>();
+            try
+            {
+                if(_httpContextAccessor.HttpContext != null)
+                {
+                    var loggedUser = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+
+                    if (loggedUser.ToLower() != "admin")
+                    {
+                        throw new Exception("This admin is not authorized to disables an admin");
+                        
+                    }
+                    var adminaccount = await _dataContext.Admins.Where(x => x.Username == disableAdminDto.Email).FirstOrDefaultAsync();
+                    if(adminaccount == null)
+                    {
+                        throw new Exception("Admin account does not exist");
+                    }
+                    adminaccount.Disabled = false;
+                    await _dataContext.SaveChangesAsync();
+                    response.Data = $"{disableAdminDto.Email} account is enabled!";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                response.Status = false;
+                response.StatusMessage = ex.Message;
+                _logger.LogError($"An Error Occurred...{ex.Message}");
+            }
+            return response;
+        }
     }
 }
